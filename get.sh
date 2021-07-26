@@ -38,6 +38,10 @@ TYPE="jdk"
 TEST_IMAGES_REQUIRED=true
 DEBUG_IMAGES_REQUIRED=true
 
+# testtest, should be false
+CODE_COVERAGE_REQUIRED=false
+
+
 usage ()
 {
 	echo 'Usage : get.sh -platform|-p x64_linux | x64_mac | s390x_linux | ppc64le_linux | aarch64_linux | ppc64_aix'
@@ -61,6 +65,7 @@ usage ()
 	echo '                [--vendor_shas ] : optional. Comma separated SHAs of the vendor repositories'
 	echo '                [--vendor_branches ] : optional. Comma separated vendor branches'
 	echo '                [--vendor_dirs ] : optional. Comma separated directories storing vendor test resources'
+	echo '                [--code_coverage_required ] : optional. indicate if code coverage is required'
 }
 
 parseCommandLineArgs()
@@ -137,6 +142,12 @@ parseCommandLineArgs()
 
 			"--debug_images_required" )
 				DEBUG_IMAGES_REQUIRED="$1"; shift;;
+			
+			
+			# testteset
+			"--code_coverage_required" )
+				CODE_COVERAGE_REQUIRED="$1"; shift;;
+
 
 			"--help" | "-h" )
 				usage; exit 0;;
@@ -379,6 +390,22 @@ fi
 				cd $SDKDIR/openjdkbinary/tmp
 				jar_dirs=`ls -d */`
 				jar_dir_array=(${jar_dirs//\\n/ })
+
+
+
+
+
+
+
+				echo "testtest3 tar folders"
+				for entry in $jar_dir_array
+				do
+				    echo "$entry"
+				done
+
+
+
+
 				len=${#jar_dir_array[@]}
 				if [[ "$len" == 1 ]]; then
 					jar_dir_name=${jar_dir_array[0]}
@@ -388,9 +415,16 @@ fi
 						mv $jar_dir_name ../j2re-image
 					elif [[ "$jar_dir_name" =~ jdk*  &&  "$jar_dir_name" != "j2sdk-image" ]]; then
 						mv $jar_dir_name ../j2sdk-image
+
+						echo "testtest3 $jar_dir_name moved to j2sdk-image"
+						
+
+
+
 					#The following only needed if openj9 has a different image name convention
 					elif [[ "$jar_dir_name" != "j2sdk-image" ]]; then
 						mv $jar_dir_name ../j2sdk-image
+						echo "testtest4 $jar_dir_name moved to j2sdk-image"
 					fi
 				elif [[ "$len" > 1 ]]; then
 					mv ../tmp ../j2sdk-image
@@ -583,8 +617,30 @@ testJavaVersion()
 if [[ $TEST_JDK_HOME == "" ]]; then
 	TEST_JDK_HOME=$SDKDIR/openjdkbinary/j2sdk-image
 fi
-_java=${TEST_JDK_HOME}/bin/java
-_release=${TEST_JDK_HOME}/release
+
+
+echo "testtest4"
+echo "CODE_COVERAGE_REQUIRED value is ${CODE_COVERAGE_REQUIRED}"
+
+
+echo "testtest4 list sdk  folders"
+for entryq in $TEST_JDK_HOME/*; do
+	echo "$entryq"
+done
+echo "testtest5 list completed"
+
+
+if [[ $CODE_COVERAGE_REQUIRED ]]; then
+	_java=${TEST_JDK_HOME}/build/bin/java
+	_release=${TEST_JDK_HOME}/build/release	
+
+else
+	_java=${TEST_JDK_HOME}/bin/java
+	_release=${TEST_JDK_HOME}/release
+fi
+
+
+
 if [ -x ${_java} ]; then
 	echo "Run ${_java} -version"
 	echo "=JAVA VERSION OUTPUT BEGIN="
@@ -596,9 +652,19 @@ if [ -x ${_java} ]; then
 		echo "=RELEASE INFO END="
 	fi
 else
-	echo "${TEST_JDK_HOME}/bin/java does not exist! Searching under TEST_JDK_HOME: ${TEST_JDK_HOME}..."
-	# Search javac as java may not be unique
-	javac_path=`find ${TEST_JDK_HOME} \( -path "*/bin/javac" -o -path "*/bin/javac.exe" \)`
+	if [[ $CODE_COVERAGE_REQUIRED ]]; then
+		echo "${TEST_JDK_HOME}/build/bin/java does not exist! Searching under TEST_JDK_HOME: ${TEST_JDK_HOME}..."
+		# Search javac as java may not be unique
+		javac_path=`find ${TEST_JDK_HOME} \( -path "*/images/jdk/bin/javac" -o -path "*/images/jdk/bin/javac.exe" \)`
+
+	else
+		echo "${TEST_JDK_HOME}/bin/java does not exist! Searching under TEST_JDK_HOME: ${TEST_JDK_HOME}..."
+		# Search javac as java may not be unique
+		javac_path=`find ${TEST_JDK_HOME} \( -path "*/bin/javac" -o -path "*/bin/javac.exe" \)`
+	fi
+
+
+
 	if [[ $javac_path != "" ]]; then
 		echo "javac_path: ${javac_path}"
 		javac_path_array=(${javac_path//\\n/ })
@@ -616,6 +682,10 @@ else
 		echo "=JAVA VERSION OUTPUT END="
 		TEST_JDK_HOME=${java_dir}/../
 		echo "TEST_JDK_HOME=${TEST_JDK_HOME}" > ${TESTDIR}/job.properties
+		if [[ $CODE_COVERAGE_REQUIRED ]]; then
+			echo "GCOV_PREFIX=${SDKDIR}/openjdkbinary/j2sdk-image" >> ${TESTDIR}/job.properties
+		fi
+
 	else
 		echo "Cannot find javac under TEST_JDK_HOME: ${TEST_JDK_HOME}!"
 		exit 1
