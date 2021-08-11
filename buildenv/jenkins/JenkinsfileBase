@@ -75,7 +75,8 @@ def setupEnv() {
 	// testtest: default value should not be true
 	env.CODE_COVERAGE_REQUIRED = params.CODE_COVERAGE_REQUIRED ? params.CODE_COVERAGE_REQUIRED : true
 	if (env.CODE_COVERAGE_REQUIRED) {
-		env.GCOV_PREFIX_STRIP = 5
+		// GCOV strips # directory from BUILD pipeline, /home/jenkins/workspace/Build_JDK11_x86-64_linux_Personal/build/linux-x86_64-normal-server-release/vm
+		env.GCOV_PREFIX_STRIP = 1
 		env.GCOV_PREFIX = env.TEST_JDK_HOME
 		echo "testtest1 env.GCOV_PREFIX_STRIP in the JenkinsFileBase: ${env.GCOV_PREFIX_STRIP}"
 		echo "testtest1 env.GCOV_PREFIX in the JenkinsFileBase: ${env.GCOV_PREFIX}"
@@ -601,9 +602,9 @@ def buildTest() {
 
 
 				// TO-DO: need to be moved to post part, here just check no lcov installed. 
-				echo "testtest9 lcov"
-				sh "lcov --capture --directory '${WORKSPACE}/openjdkbinary/j2sdk-image' --output-file coverage.info --rc geninfo_adjust_src_path='/home/jenkins/workspace/Build_JDK11_x86-64_linux_Personal/ => /root/tmp1/workspace/'"
-				echo "testtest9 lcov end"
+				// echo "testtest9 lcov"
+				// sh "lcov --capture --directory '${WORKSPACE}/openjdkbinary/j2sdk-image' --output-file coverage.info --rc geninfo_adjust_src_path='/home/jenkins/workspace/Build_JDK11_x86-64_linux_Personal/ => /root/tmp1/workspace/'"
+				// echo "testtest9 lcov end"
 
 
 
@@ -665,6 +666,16 @@ def runTest( ) {
 				}
 				else {
 					makeTest("${RUNTEST_CMD}")
+				}
+			}
+
+			if (env.CODE_COVERAGE_REQUIRED) {
+				echo 'testtest9 Generating Code Coverage Reports...'
+				dir("$WORKSPACE/openjdkbinary/j2sdk-image") {
+					echo "testtest9 workspace is $WORKSPACE"
+					sh "lcov --capture --directory . --output-file coverage.info --rc geninfo_adjust_src_path='/home/jenkins/workspace/ => /home/jenkins/workspace/Grinder/openjdkbinary/j2sdk-image/jenkins/workspace/'"
+					sh "lcov --output-file coverage1.info --remove coverage.info '/usr/include/*' '/usr/local/*' '/home/*/attrlookup.gperf'"
+					sh "genhtml coverage1.info --output-directory out1"
 				}
 			}
 		}
@@ -739,9 +750,21 @@ def post(output_name) {
 					uploadToArtifactory(pattern)
 				}
 			} else if ((currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE' || currentBuild.result == 'ABORTED') || params.ARCHIVE_TEST_RESULTS) {
-				def test_output_tar_name = "${output_name}_test_output${suffix}"
+				
+				
+				echo "testtest8 archive all files"
+				// def test_output_tar_name = "${output_name}_test_output${suffix}"
+				def test_output_tar_name = "cov_${output_name}_test_output${suffix}"
+				
+				
 				if (tar_cmd.startsWith('tar')) {
-					sh "${tar_cmd} - ${pax_opt} ./aqa-tests/TKG/output_* ${tar_cmd_suffix} > ${test_output_tar_name}"
+
+
+					// sh "${tar_cmd} - ${pax_opt} ./aqa-tests/TKG/output_* ${tar_cmd_suffix} > ${test_output_tar_name}"
+					sh "${tar_cmd} - ${pax_opt} ${WORKSPACE}/openjdkbinary/j2sdk-image ${tar_cmd_suffix} > ${test_output_tar_name}"
+					echo "testtest8 Completed archiving cov files"
+
+
 				} else {
 					sh "${tar_cmd} ${test_output_tar_name} ${pax_opt} ./aqa-tests/TKG/output_* ${tar_cmd_suffix}"
 				}
