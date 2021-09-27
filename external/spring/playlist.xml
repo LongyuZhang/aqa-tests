@@ -38,5 +38,15 @@
 		<groups>
 			<group>external</group>
 		</groups>
+		<disables>
+			<disable>
+				<comment>https://github.com/adoptium/aqa-tests/issues/2900</comment>
+				<impl>openj9</impl>
+			</disbale>
+			<disable>
+				<comment>https://github.com/adoptium/aqa-tests/issues/2900</comment>
+                                <impl>ibm</impl>
+			</disbale>
+		<disables>
 	</test>
 </playlist>
