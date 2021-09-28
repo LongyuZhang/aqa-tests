@@ -25,6 +25,18 @@
 		<groups>
 			<group>external</group>
 		</groups>
+		<disables>
+			<disable>
+				<comment>https://github.com/adoptium/aqa-tests/issues/2903</comment>
+				<impl>openj9</impl>
+				<version>11</version>
+			</disbale>
+			<disable>
+				<comment>https://github.com/adoptium/aqa-tests/issues/2903</comment>
+				<impl>ibm</impl>
+				<version>11</version>
+			</disbale>
+		<disables>
 	</test>
 	<test>
 		<testCaseName>external_custom</testCaseName>
