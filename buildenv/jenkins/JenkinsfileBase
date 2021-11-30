@@ -691,7 +691,7 @@ def post(output_name) {
 			} else if ((currentBuild.result == 'UNSTABLE' || currentBuild.result == 'FAILURE' || currentBuild.result == 'ABORTED') || params.ARCHIVE_TEST_RESULTS) {
 				def test_output_tar_name = "${output_name}_test_output${suffix}"
 				if (tar_cmd.startsWith('tar')) {
-					sh "${tar_cmd} - ${pax_opt} ./aqa-tests/TKG/output_* ${tar_cmd_suffix} > ${test_output_tar_name}"
+					sh "${tar_cmd} - ${pax_opt} ${WORKSPACE}/jvmtest ${tar_cmd_suffix} > ${test_output_tar_name}"
 				} else {
 					sh "${tar_cmd} ${test_output_tar_name} ${pax_opt} ./aqa-tests/TKG/output_* ${tar_cmd_suffix}"
 				}
