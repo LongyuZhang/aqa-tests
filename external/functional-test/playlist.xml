@@ -27,6 +27,19 @@
 		</groups>
 	</test>
 	<test>
+		<testCaseName>criu_docker_test</testCaseName>
+		<command> $(TEST_ROOT)$(D)external$(D)external.sh --run --tag "${DOCKERIMAGE_TAG}" --version ${JDK_VERSION} --impl ${JDK_IMPL} --dir functional-test --testtarget _cmdLineTester_criu --reportdst $(REPORTDIR) --docker_args "$(EXTRA_DOCKER_ARGS)"; \
+		$(TEST_STATUS); \
+		$(TEST_ROOT)$(D)external$(D)external.sh --clean --tag "${DOCKERIMAGE_TAG}" --version ${JDK_VERSION} --impl ${JDK_IMPL} --dir functional-test
+		</command>
+		<levels>
+			<level>special</level>
+		</levels>
+		<groups>
+			<group>external</group>
+		</groups>
+	</test>
+	<test>
 		<testCaseName>extended_functional</testCaseName>
 		<command> $(TEST_ROOT)$(D)external$(D)external.sh --run --tag "${DOCKERIMAGE_TAG}" --dir functional-test --testtarget _extended.functional.regular --reportdst $(REPORTDIR) --docker_args "$(EXTRA_DOCKER_ARGS)"; \
 		$(TEST_STATUS); \

@@ -19,8 +19,15 @@ export TEST_JDK_HOME=$JAVA_HOME
 echo "TEST_JDK_HOME is : $TEST_JDK_HOME"
 export BUILD_LIST=functional
 
+echo "testtest set up criu environment"
+apt install pkg-config nftables iproute2 libcap-dev libnl-3-dev libnet1-dev libnet-cpp-dev libnetxx-dev libaio-dev asciidoc xmlto libbsd-dev libnftables-dev protobuf-c-compiler libprotobuf-dev libprotobuf-c1 libprotobuf-c-dev protobuf-compiler python-protobuf
+git clone https://github.com/xemul/criu.git criu
+cd criu && make clean && make && make install
+setcap cap_sys_time,cap_dac_override,cap_chown,cap_setpcap,cap_setgid,cap_audit_control,cap_dac_read_search,cap_net_admin,cap_sys_chroot,cap_sys_ptrace,cap_fowner,cap_kill,cap_fsetid,cap_sys_resource,cap_setuid,cap_sys_admin=eip /usr/local/sbin/criu: \
+cd ..
+
 cd /aqa-tests
-./get.sh -t /aqa-tests
+./get.sh --openj9_repo https://github.com/longyuzhang/openj9.git --openj9_branch criu1
 
 cd /aqa-tests/TKG
 
