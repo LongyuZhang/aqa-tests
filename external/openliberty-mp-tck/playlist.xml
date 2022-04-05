@@ -58,14 +58,6 @@
 		<testCaseName>openliberty_microprofile_tck</testCaseName>
 		<disables>
 			<disable>
-				<comment>https://github.com/adoptium/aqa-tests/issues/2902</comment>
-				<impl>openj9</impl>
-			</disable>
-			<disable>
-				<comment>https://github.com/adoptium/aqa-tests/issues/2902</comment>
-				<impl>ibm</impl>
-			</disable>
-			<disable>
 				<comment>https://github.com/adoptium/aqa-tests/issues/3381#issuecomment-1082095158</comment>
 				<version>17</version>
 			</disable>
