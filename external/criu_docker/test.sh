@@ -15,20 +15,29 @@
 source $(dirname "$0")/test_base_functions.sh
 # Set up Java to be used by the quarkus quickstarts test
 echo_setup
-excludeProject="-pl !:hibernate-orm-multi-tenancy-quickstart,\
-!:hibernate-search-orm-elasticsearch-quickstart,\
-!:mqtt-quickstart,\
-!:rabbitmq-quickstart-processor,\
-!:redis-quickstart,\
-!:security-jdbc-quickstart,\
-!:security-openid-connect-multi-tenancy-quickstart"
 
 
-export MAVEN_OPTS="-Xmx1g"
-echo "Compile and run quarkus_quickstarts tests"
-mvn --batch-mode $excludeProject clean install
+export TEST_JDK_HOME=$JAVA_HOME
+echo "TEST_JDK_HOME is : $TEST_JDK_HOME"
+
+criu -V
+
+
+
+wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/test/functional/cmdLineTests/criu/src/CRIUSimpleTest.java
+
+
+echo "Starting criu_docker test..."
+mkdir cpData
+${TEST_JDK_HOME}/bin/javac CRIUSimpleTest.java
+
+${TEST_JDK_HOME}/bin/java -XX:+EnableCRIUSupport CRIUSimpleTest >foo 2>&1
+
+criu restore -D ./cpData --shell-job
+cat foo
+
 test_exit_code=$?
-echo "Build quarkus_quickstarts completed"
+echo "Completed criu_docker test..."
 
 find ./ -type d -name 'surefire-reports' -exec cp -r "{}" /testResults \;
 echo "Test results copied"
