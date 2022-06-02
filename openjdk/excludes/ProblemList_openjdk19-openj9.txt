@@ -172,7 +172,6 @@ jdk/internal/loader/NativeLibraries/Main.java https://github.com/adoptium/aqa-te
 jdk/internal/misc/ThreadFlock/ThreadFlockTest.java	https://github.com/eclipse-openj9/openj9/issues/15152	generic-all
 jdk/internal/vm/Continuation/Basic.java	https://github.com/eclipse-openj9/openj9/issues/15163	generic-all
 jdk/internal/vm/Continuation/ClassUnloading.java	https://github.com/eclipse-openj9/openj9/issues/15152	generic-all
-jdk/internal/vm/Continuation/HumongousStack.java	https://github.com/eclipse-openj9/openj9/issues/15189	generic-all
 jdk/internal/vm/Continuation/LiveFramesDriver.java	https://github.com/eclipse-openj9/openj9/issues/15152	generic-all
 jdk/internal/vm/Continuation/Scoped.java	https://github.com/eclipse-openj9/openj9/issues/15163	generic-all
 jdk/modules/etc/DefaultModules.java	https://github.com/eclipse-openj9/openj9/issues/15152	generic-all
