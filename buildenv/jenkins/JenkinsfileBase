@@ -77,7 +77,9 @@ def setupEnv() {
 	env.USE_JRE=params.USE_JRE ? params.USE_JRE : false
 	env.RERUN_LINK = ""
 	env.FAILED_TEST_TARGET = ""
-
+	// Temporarily only one DOCKER_REGISTRY is avaliable, will add these parameters into jenkins when more registries are available
+	env.DOCKER_REGISTRY_URL = env.BUILD_URL.contains('hyc') ? "sys-rt-docker-local.artifactory.swg-devops.com" : ""
+	env.DOCKER_REGISTRY_URL_CREDENTIAL_ID =  env.BUILD_URL.contains('hyc') ? params.CUSTOMIZED_SDK_URL_CREDENTIAL_ID : ""
 	ITERATIONS = params.ITERATIONS ? "${params.ITERATIONS}".toInteger() : 1
 
 	if (JOB_NAME.contains("Grinder")) {
@@ -622,6 +624,23 @@ def runTest( ) {
 					sh "iconv -f iso8859-1 -t ibm-1047 ${parallelList} > ${parallelList}.ebcdic; rm ${parallelList}; mv ${parallelList}.ebcdic ${parallelList}"
 				}
 			}
+
+
+
+			// Private Docker Registry Login, temporarily only hyc-jenkins has private Docker Registry
+			if (env.BUILD_URL.contains('hyc')) {
+				if (env.BUILD_LIST.contains('external') && env.DOCKER_REGISTRY_URL != "" && env.DOCKER_REGISTRY_URL_CREDENTIAL_ID != "" ) {	
+					// USERNAME and PASSWORD reference with a withCredentials block will not be visible within job output
+					withCredentials([usernamePassword(credentialsId: "${env.DOCKER_REGISTRY_URL_CREDENTIAL_ID}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+						echo "Private Docker Registry login starts:"
+						sh 'echo $PASSWORD | docker login --username=$USERNAME --password-stdin ' + "$env.DOCKER_REGISTRY_URL"
+					}
+				}
+			} else {
+				echo "Private Docker Registry not available for this Jenkins!"
+			}
+
+
 			RUNTEST_CMD = "${TARGET} ${CUSTOM_OPTION}"
 			for (int i = 1; i <= ITERATIONS; i++) {
 				echo "ITERATION: ${i}/${ITERATIONS}"
