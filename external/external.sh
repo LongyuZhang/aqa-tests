@@ -25,6 +25,11 @@ version=8
 impl=hotspot
 test=derby
 testtarget=""
+platform=""
+portable="false"
+node_name=""
+node_labels=""
+docker_registry_url=""
 reportdst="false"
 reportsrc="false"
 docker_args=""
@@ -33,10 +38,10 @@ imageArg=""
 
 
 usage () {
-	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--clean]'
+	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_url env.DOCKER_REGISTRY_URL] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--clean]'
 }
 
-supported_tests="external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
+supported_tests="criu-portable external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
 
 function check_test() {
     test=$1
@@ -92,6 +97,21 @@ parseCommandLineArgs() {
 				fi
 				shift;
 				parse_tag;;
+
+			"--platform" )
+				platform="$1"; shift;;
+
+			"--portable" )
+				portable="$1"; shift;;
+
+			"--node_name" )
+				node_name="$1"; shift;;
+
+			"--node_labels" )
+				node_labels="$1"; shift;;
+
+			"--docker_registry_url" )
+				docker_registry_url="$1"; shift;;
 
 			"--reportsrc" )
 				reportsrc="$1"; shift;;
@@ -181,20 +201,48 @@ if [ $command_type == "run" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
-	if [ $reportsrc != "false" ]; then
+
+	if [[ $reportsrc != "false" ]] || [[ $portable != "false" ]]; then
 		echo "docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
-		docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		if [ $reportsrc != "false" ]; then
+			docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		fi
+		
+		if [ $portable != "false" ]; then
+			node_label_micro_architecture=""
+			for label in $node_labels
+			do
+				# TO-DO: when micro-architecture is ready, update to check four dots 
+				if [[ "$label" == "hw.arch."* ]]; then
+					node_label_micro_architecture=$label
+				fi
+			done
+
+			restore_ready_checkpoint_image="criu-restore-ready"
+			restore_ready_checkpoint_tag="${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${PLATFORM}-${node_label_micro_architecture}"
+			tagged_restore_ready_checkpoint_image="${docker_registry_url}/${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag}"
+			docker commit $test-test full_restore_ready_checkpoint_image
+			docker push $tagged_restore_ready_checkpoint_image
+
+			echo "Pushed docker image ${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag} to registry ${docker_registry_url}"
+			docker logout $docker_registry_url
+			docker rmi -f $tagged_restore_ready_checkpoint_image
+
+			# restore
+			# echo "docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' checkpoint-image:latest -c 'cd /aqa-tests/TKG/output_*/cmdLineTester_criu_onlyCheckpoint*; criu restore -D ./cpData --shell-job'"
+			# docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' checkpoint-image:latest -c "cd /aqa-tests/TKG/output_*/cmdLineTester_criu_onlyCheckpoint*; criu restore -D ./cpData --shell-job; cat testOutput"
+		fi
 	else
-		echo "docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
+		echo "docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
 	fi
 fi
