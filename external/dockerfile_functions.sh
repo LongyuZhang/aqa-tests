@@ -386,6 +386,10 @@ print_clone_project() {
 
     # Cause Test name to be capitalized
     test_tag="$(sanitize_test_names ${test} | tr a-z A-Z)_TAG"
+    git_branch_tag="master"
+    if ( "$test_tag" == *"PORTABLE"* ); then
+        $git_branch_tag="master"
+    fi
 
     # Get Github folder name
     folder="$(echo ${github_url} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
@@ -394,7 +398,7 @@ print_clone_project() {
             "\nENV ${test_tag}=\$${test_tag}" \
             "\nRUN git clone ${github_url}" \
             "\nWORKDIR /${folder}/" \
-            "\nRUN git checkout \$${test_tag}" \
+            "\nRUN git checkout \$${git_branch_tag}" \
             "\nWORKDIR /" \
             "\n" >> ${file}
 }

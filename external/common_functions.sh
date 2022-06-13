@@ -21,7 +21,7 @@ supported_jvms="hotspot openj9"
 
 # Supported distros
 # Distros Not Included: windowsservercore-ltsc2016
-supported_os="ubuntu"
+supported_os="ubuntu ubi"
 
 # Supported packges
 supported_packages="jdk jre"
@@ -30,7 +30,7 @@ supported_packages="jdk jre"
 supported_builds="full"
 
 # Supported tests
-supported_tests="external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
+supported_tests="external_custom camel criu-portable-checkpoint criu-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
 
 function check_version() {
     version=$1

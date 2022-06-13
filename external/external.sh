@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-# script runs in 3 modes - build / run / clean
+# script runs in 4 modes - build / run / load / clean
 
 set -e
 tag=nightly
@@ -25,6 +25,11 @@ version=8
 impl=hotspot
 test=derby
 testtarget=""
+platform=""
+portable="false"
+node_name=""
+node_labels=""
+docker_registry_url=""
 reportdst="false"
 reportsrc="false"
 docker_args=""
@@ -33,10 +38,10 @@ imageArg=""
 
 
 usage () {
-	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--clean]'
+	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_url DOCKER_REGISTRY_URL] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--load|--clean]'
 }
 
-supported_tests="external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
+supported_tests="external_custom camel criu-portable-checkpoint  criu-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
 
 function check_test() {
     test=$1
@@ -93,6 +98,21 @@ parseCommandLineArgs() {
 				shift;
 				parse_tag;;
 
+			"--platform" )
+				platform="$1"; shift;;
+
+			"--portable" )
+				portable="$1"; shift;;
+
+			"--node_name" )
+				node_name="$1"; shift;;
+
+			"--node_labels" )
+				node_labels="$1"; shift;;
+
+			"--docker_registry_url" )
+				docker_registry_url="$1"; shift;;
+
 			"--reportsrc" )
 				reportsrc="$1"; shift;;
 
@@ -107,7 +127,10 @@ parseCommandLineArgs() {
 
 			"--run" | "-r" )
 				command_type=run;;
-			
+
+			"--load" | "-l" )
+				command_type=load;;
+
 			"--clean" | "-c" )
 				command_type=clean;;
 
@@ -181,27 +204,65 @@ if [ $command_type == "run" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
-	if [ $reportsrc != "false" ]; then
+
+	if [[ $reportsrc != "false" ]] || [[ $portable != "false" ]]; then
 		echo "docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
-		docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		if [ $reportsrc != "false" ]; then
+			docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		fi
+		
+		if [ $portable != "false" ]; then
+			# Testtesttest add docker registry check
+			node_label_micro_architecture=""
+			for label in $node_labels
+			do
+				# TO-DO: when micro-architecture is ready, update to check four dots 
+				if [[ "$label" == "hw.arch."* ]]; then
+					node_label_micro_architecture=$label
+				fi
+			done
+
+			restore_ready_checkpoint_image="criu-restore-ready-with-jdk"
+			restore_ready_checkpoint_tag="${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${PLATFORM}-${node_label_micro_architecture}"
+			tagged_restore_ready_checkpoint_image="${docker_registry_url}/${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag}"
+			echo "tagged_restore_ready_checkpoint_image is $tagged_restore_ready_checkpoint_image"
+			docker commit $test-test $tagged_restore_ready_checkpoint_image
+
+			echo "Pushing docker image ${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag} to docker registry"
+			docker push $tagged_restore_ready_checkpoint_image
+
+			docker logout $docker_registry_url
+			docker rmi -f $tagged_restore_ready_checkpoint_image
+		fi
 	else
-		echo "docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
+		echo "docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
 	fi
+fi
+
+if [ $command_type == "load" ]; then
+	docker pull $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86
+	docker image ls
+	# restore
+	echo "docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86 -c 'cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job'"
+	docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' --rm $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86 -c "cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job; cat testOutput"
+
+	echo "Testtest grep result"
 fi
 
 if [ $command_type == "clean" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
+	docker rm -f restore-checkpoint
 	docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
 fi
