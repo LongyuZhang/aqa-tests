@@ -18,19 +18,24 @@ echo_setup
 export TEST_JDK_HOME=$JAVA_HOME
 echo "TEST_JDK_HOME is : $TEST_JDK_HOME"
 export JDK_VERSION=
-echo "TEST_JDK_HOME has been unset, use auto-detect instead."
+echo "JDK_VERSION has been unset, use auto-detect instead."
 # export DYNAMIC_COMPILE=true
 export BUILD_LIST=functional
 
 cd /aqa-tests
-./get.sh --openj9_repo "https://github.com/longyuzhang/openj9.git" --openj9_branch "port4"
+# !!!!testtesttest
+./get.sh --openj9_repo "https://github.com/longyuzhang/openj9.git" --openj9_branch "port1"
 cd /aqa-tests/TKG
 
 set -e
 
-# echo "Building functional test material..."
+# echo "testtest2 Building functional test material..."
 make compile
 
-echo "Generating make files and running the functional tests"
+echo "testteset3 Generating make files and running the functional tests"
 make $1
+
+# get current container ID
+# cat /etc/hostname
+
 set +e

@@ -25,6 +25,7 @@ version=8
 impl=hotspot
 test=derby
 testtarget=""
+portable="false"
 reportdst="false"
 reportsrc="false"
 docker_args=""
@@ -33,10 +34,10 @@ imageArg=""
 
 
 usage () {
-	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--clean]'
+	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL  [--portable portable] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--clean]'
 }
 
-supported_tests="external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
+supported_tests="criu-portable external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
 
 function check_test() {
     test=$1
@@ -92,6 +93,9 @@ parseCommandLineArgs() {
 				fi
 				shift;
 				parse_tag;;
+
+			"--portable" )
+				portable="$1"; shift;;
 
 			"--reportsrc" )
 				reportsrc="$1"; shift;;
@@ -181,20 +185,43 @@ if [ $command_type == "run" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
-	if [ $reportsrc != "false" ]; then
+
+	# may not needed, or add if portable
+	docker ps -a
+	# docker stop $test-test
+	docker rm -f $test-test
+	# docker stop restore-checkpoint
+	# docker rm -f restore-checkpoint
+
+
+	if [ $reportsrc != "false" |  $portable != "false" ]; then
 		echo "docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
-		docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		if [ $reportsrc != "false" ]; then
+			docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		fi
+		# testestest need to add check of failure
+		if [ $portable != "false" ]; then
+			echo "docker commit $test-test checkpoint-image:latest"
+			docker commit $test-test checkpoint-image:latest
+			
+			docker image ls
+
+			echo "docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' checkpoint-image:latest -c 'cd /aqa-tests/TKG/output_*/cmdLineTester_criu_onlyCheckpoint*; criu restore -D ./cpData --shell-job'"
+
+			docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' checkpoint-image:latest -c "cd /aqa-tests/TKG/output_*/cmdLineTester_criu_onlyCheckpoint*; criu restore -D ./cpData --shell-job  >restoreOutput 2>&1; cat restoreOutput"
+
+		fi
 	else
-		echo "docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
+		echo "docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type "$testtarget";
 		else
-			docker run --privileged $mountV --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
+			docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
 	fi
 fi
@@ -203,5 +230,15 @@ if [ $command_type == "clean" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
-	docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
+
+
+	# may not needed, or add if portable
+	docker ps
+	docker stop $test-test
+	docker rm -f $test-test
+	docker stop restore-checkpoint
+	docker rm -f restore-checkpoint
+
+
+	docker rm -f $test-test restore-checkpoint; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type checkpoint-image:latest
 fi
