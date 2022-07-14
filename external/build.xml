@@ -87,6 +87,9 @@
 		<copy todir="${DEST_EXTERNAL}/${TEST}">
 			<fileset dir="${src}/" includes="*.sh, *.properties"/>
 		</copy>
+		<copy todir="${DEST_EXTERNAL}/${TEST}/resources/criu/x86_64">
+			<fileset dir="${src}/resources/criu/x86_64" includes="*"/>
+		</copy>
 		<copy todir="${DEST_EXTERNAL}">
 			<fileset dir="${top}" includes="*.sh"/>
 		</copy>

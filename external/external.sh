@@ -41,7 +41,7 @@ usage () {
 	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_url DOCKER_REGISTRY_URL] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--load|--clean]'
 }
 
-supported_tests="external_custom camel criu-portable-checkpoint  criu-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
+supported_tests="external_custom camel criu-portable-checkpoint  criu-portable-restore criu-ubi-portable-checkpoint criu-ubi-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
 
 function check_test() {
     test=$1
@@ -155,7 +155,8 @@ function parse_tag() {
 	
 	# set DOCKER_OS
 	case $tag in
-	
+		*ubi*) 
+			docker_os=ubi;;
 		*ubuntu*|*latest*|*nightly*) 
 	   		docker_os=ubuntu;;
    		*) echo "Unable to recognize DOCKER_OS from DOCKERIMAGE_TAG = $tag!";;
@@ -250,11 +251,11 @@ if [ $command_type == "run" ]; then
 fi
 
 if [ $command_type == "load" ]; then
-	docker pull $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86
+	docker pull $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-$docker_os-linux_x86-64-hw.arch.x86
 	docker image ls
 	# restore
-	echo "docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86 -c 'cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job'"
-	docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' --rm $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-ubuntu-linux_x86-64-hw.arch.x86 -c "cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job; cat testOutput"
+	echo "docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-$docker_os-linux_x86-64-hw.arch.x86 -c 'cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job'"
+	docker run --privileged $mountV --name restore-checkpoint --entrypoint '/bin/sh' --rm $docker_registry_url/criu-restore-ready-with-jdk:11-openj9-$docker_os-linux_x86-64-hw.arch.x86 -c "cd /aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*; criu restore -D ./cpData --shell-job; cat testOutput"
 
 	echo "Testtest grep result"
 fi
@@ -265,4 +266,5 @@ if [ $command_type == "clean" ]; then
 	fi
 	docker rm -f restore-checkpoint
 	docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
+	docker rm -f $test-test
 fi
