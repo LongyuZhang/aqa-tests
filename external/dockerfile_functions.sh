@@ -89,8 +89,14 @@ print_image_args() {
         tag="${version}-jdk"
     fi
     if [[ "${vm}" == "openj9" ]]; then
-        image_name="ibm-semeru-runtimes"
-        tag=open-${tag}
+        if  [[ "${os}" == "ubuntu" ]]; then
+            image_name="ibm-semeru-runtimes"
+            tag=open-${tag}
+        else
+            # os is ubi
+            image_name="registry.access.redhat.com/ubi8/ubi"
+            tag="8.5"
+        fi
     fi
     image="${image_name}:${tag}"
 
@@ -127,39 +133,106 @@ print_ubuntu_pkg() {
             "\n" >> ${file}
 }
 
+# Select the ubuntu OS packages
+print_ubi_pkg() {
+    local file=$1
+    local packages=$2
+
+    echo -e "RUN dnf install -y ${packages} \\" \
+            "\n\t&& dnf clean all " >> ${file}
+    echo -e "\nENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'" >> ${file}
+}
+
+# Install JDK
+print_jdk_install() {
+    local file=$1
+    local os=$2
+    local platform=$3
+
+    # JDK install is only needed for ubi image, and the installed jdk will be replaced by mounted jdk during test
+    echo -e "\nRUN set -eux; \\" \
+            "\n\t case \"${platform}\" in \\" \
+            "\n\t  *x86-64*) \\" \
+            "\n\t     BUILD_ID_LAST_SUCCESS=\$(wget -qO- https://openj9-jenkins.osuosl.org/job/Build_JDK11_x86-64_linux_criu_Nightly/lastSuccessfulBuild/buildNumber); \\" \
+            "\n\t     BINARY_URL=\$(wget -qO- https://openj9-jenkins.osuosl.org/job/Build_JDK11_x86-64_linux_criu_Nightly/lastSuccessfulBuild/consoleText | grep -Po \"(?<=Deploying artifact: )https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK11_x86-64_linux_criu_Nightly/\${BUILD_ID_LAST_SUCCESS}/OpenJ9-JDK11-x86-64_linux_criu.*tar.gz\"); \\" \
+            "\n\t     ;; \\" \
+            "\n\t  *) \\" \
+            "\n\t     echo \"Unsupported platform \"; \\" \
+            "\n\t     exit 1; \\" \
+            "\n\t     ;; \\" \
+            "\n\t esac; \\" \
+            "\n\t curl -LfsSo /tmp/openjdk.tar.xz \${BINARY_URL}; \\" \
+            "\n\t mkdir /tmp/jdk-extract; \\" \
+            "\n\t cd /tmp/jdk-extract; \\" \
+            "\n\t tar -xf /tmp/openjdk.tar.xz --strip-components=1; \\" \
+            "\n\t ./bin/jlink --no-header-files --no-man-pages --compress=2 --add-modules java.base,java.compiler,java.datatransfer,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.prefs,java.rmi,java.scripting,java.se,java.security.jgss,java.security.sasl,java.smartcardio,java.sql,java.sql.rowset,java.transaction.xa,java.xml,java.xml.crypto,jdk.accessibility,jdk.attach,jdk.charsets,jdk.compiler,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.dynalink,jdk.editpad,jdk.httpserver,jdk.internal.ed,jdk.internal.jvmstat,jdk.internal.le,jdk.internal.opt,jdk.jartool,jdk.javadoc,jdk.jcmd,jdk.jconsole,jdk.jdeps,jdk.jdi,jdk.jdwp.agent,jdk.jlink,jdk.jshell,jdk.jsobject,jdk.localedata,jdk.management,jdk.management.agent,jdk.naming.dns,jdk.naming.ldap,jdk.naming.rmi,jdk.net,jdk.pack,jdk.rmic,jdk.scripting.nashorn,jdk.scripting.nashorn.shell,jdk.sctp,jdk.security.auth,jdk.security.jgss,jdk.unsupported,jdk.unsupported.desktop,jdk.xml.dom,jdk.zipfs,openj9.criu,openj9.cuda,openj9.dataaccess,openj9.dtfj,openj9.dtfjview,openj9.gpu,openj9.jvm,openj9.sharedclasses,openj9.traceformat,openj9.zosconditionhandling --output /opt/java/openjdk; \\" \
+            "\n\t rm -rf /tmp/jdk-extract; \\" \
+            "\n\t rm -rf /tmp/openjdk.tar.xz; " \
+             "\n" >> ${file}
+
+    echo -e "\nENV JAVA_HOME=/opt/java/openjdk \\" \
+            "\n\t PATH=\"/opt/java/openjdk/bin:\$PATH\" " \
+            "\n" >> ${file}
+
+    echo -e "\nENV JAVA_TOOL_OPTIONS=\"-XX:+IgnoreUnrecognizedVMOptions -XX:+IdleTuningGcOnIdle\" " \
+            "\n" >> ${file}
+
+    echo -e "\nENV RANDFILE=/tmp/.rnd  \\" \
+            "\n\t OPENJ9_JAVA_OPTIONS=\"-XX:+IgnoreUnrecognizedVMOptions -XX:+IdleTuningGcOnIdle -Dosgi.checkConfiguration=false\" " \
+            "\n" >> ${file}
+
+}
+
 # Install Ant
 print_ant_install() {
     local file=$1
     local ant_version=$2
+    local os=$3
 
     echo -e "ARG ANT_VERSION=${ant_version}" \
           "\nENV ANT_VERSION=\$ANT_VERSION" \
           "\nENV ANT_HOME=/opt/ant" \
-          "\n\n# Install Ant" \
-          "\nRUN wget --no-verbose --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-\${ANT_VERSION}-bin.tar.gz \\" \
-          "\n\t&& wget --no-verbose --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512 \\" >> ${file}
+          "\n\n# Install Ant" >> ${file}
 
-    echo -e "\t&& echo \"\$(cat apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512) apache-ant-\${ANT_VERSION}-bin.tar.gz\" | sha512sum -c \\" >> ${file}
-
-    echo -e "\t&& tar -zvxf apache-ant-\${ANT_VERSION}-bin.tar.gz -C /opt/ \\" \
+     echo -e "\n\n# testtest os is ${os}" >> ${file}
+    if [[ "${os}" == *"ubi"* ]]; then
+        echo -e "\nRUN cd /tmp \\" \
+            "\n\t&& wget --progress=dot:mega -O ant.zip https://archive.apache.org/dist/ant/binaries/apache-ant-\${ANT_VERSION}-bin.zip \\" \
+            "\n\t&& unzip -q ant.zip -d /opt \\" \
             "\n\t&& ln -s /opt/apache-ant-\${ANT_VERSION} /opt/ant \\" \
-            "\n\t&& rm -f apache-ant-\${ANT_VERSION}-bin.tar.gz \\" \
-            "\n\t&& rm -f apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512" \
-            "\n\n# Add Ant to PATH" \
-            "\nENV PATH \${PATH}:\${ANT_HOME}/bin" \
+            "\n\t&& ln -s /opt/ant/bin/ant /usr/bin/ant \\" \
+            "\n\t&& wget --progress=dot:mega -O ant-contrib.tar.gz https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.tar.gz \\" \
+            "\n\t&& tar -xzf ant-contrib.tar.gz \\" \
+            "\n\t&& mv ant-contrib/ant-contrib-1.0b3.jar /opt/ant/lib \\" \
+            "\n\t&& rm -rf ant-contrib ant.zip ant-contrib.tar.gz" \
             "\n" >> ${file}
+    else
+        echo -e "\nRUN wget --no-verbose --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-\${ANT_VERSION}-bin.tar.gz \\" \
+            "\n\t&& wget --no-verbose --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512 \\" >> ${file}
+
+        echo -e "\t&& echo \"\$(cat apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512) apache-ant-\${ANT_VERSION}-bin.tar.gz\" | sha512sum -c \\" >> ${file}
+
+        echo -e "\t&& tar -zvxf apache-ant-\${ANT_VERSION}-bin.tar.gz -C /opt/ \\" \
+                "\n\t&& ln -s /opt/apache-ant-\${ANT_VERSION} /opt/ant \\" \
+                "\n\t&& rm -f apache-ant-\${ANT_VERSION}-bin.tar.gz \\" \
+                "\n\t&& rm -f apache-ant-\${ANT_VERSION}-bin.tar.gz.sha512" \
+                "\n\n# Add Ant to PATH" \
+                "\nENV PATH \${PATH}:\${ANT_HOME}/bin" \
+                "\n" >> ${file}
+    fi
 }
 
 # Install Ant Contrib
 print_ant_contrib_install() {
     local file=$1
     local ant_contrib_version=$2
+    local os=$3
 
     echo -e "ARG ANT_CONTRIB_VERSION=${ant_contrib_version}" \
-          "\nENV ANT_CONTRIB_VERSION=\$ANT_CONTRIB_VERSION" \
-          "\n\n# Install Ant Contrib" \
-          "\nRUN wget --no-verbose --no-check-certificate --no-cookies https://sourceforge.net/projects/ant-contrib/files/ant-contrib/\${ANT_CONTRIB_VERSION}/ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz \\" \
-          "\n\t&& wget --no-verbose --no-check-certificate --no-cookies https://sourceforge.net/projects/ant-contrib/files/ant-contrib/\${ANT_CONTRIB_VERSION}/ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz.md5 \\" >> ${file}
+        "\nENV ANT_CONTRIB_VERSION=\$ANT_CONTRIB_VERSION" \
+        "\n\n# Install Ant Contrib" \
+        "\nRUN wget --no-verbose --no-check-certificate --no-cookies https://sourceforge.net/projects/ant-contrib/files/ant-contrib/\${ANT_CONTRIB_VERSION}/ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz \\" \
+        "\n\t&& wget --no-verbose --no-check-certificate --no-cookies https://sourceforge.net/projects/ant-contrib/files/ant-contrib/\${ANT_CONTRIB_VERSION}/ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz.md5 \\" >> ${file}
 
     echo -e "\t&& echo \"\$(cat ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz.md5) ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz\" | md5sum -c \\" >> ${file}
 
@@ -169,6 +242,63 @@ print_ant_contrib_install() {
             "\n\t&& rm -f ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz \\" \
             "\n\t&& rm -f ant-contrib-\${ANT_CONTRIB_VERSION}-bin.tar.gz.md5" \
             "\n" >> ${file}
+}
+
+
+# Install GCC
+print_gcc_install() {
+    local file=$1
+    local gcc_version=$2
+    local os=$3
+
+    echo -e "\n\n# Install GCC" >> ${file}
+
+    if [[ "${os}" == *"ubi"* ]]; then
+        echo -e "\nRUN cd /usr/local \\" \
+            "\n\t&& wget --progress=dot:mega -O gcc-7.tar.xz 'https://ci.adoptopenjdk.net/userContent/gcc/gcc750+ccache.x86_64.tar.xz' \\" \
+            "\n\t&& tar -xJf gcc-7.tar.xz --strip-components=1 \\" \
+            "\n\t&& ln -sf ../local/bin/gcc-7.5 /usr/bin/gcc \\" \
+            "\n\t&& ln -sf ../local/bin/g++-7.5 /usr/bin/g++ \\" \
+            "\n\t&& ln -sf gcc /usr/bin/cc \\" \
+            "\n\t&& ln -sf g++ /usr/bin/c++ \\" \
+            "\n\t&& rm -f gcc-7.tar.xz " \
+            "\n" >> ${file}
+    fi
+}
+
+# Install protobuf
+print_protobuf_install() {
+    local file=$1
+    local protobuf_version=$2
+    local os=$3
+
+    echo -e "\n\n# Install protobuf" >> ${file}
+
+    if [[ "${os}" == *"ubi"* ]]; then
+        echo -e "\nRUN wget --progress=dot:mega -O protobuf.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v${protobuf_version}/protobuf-${protobuf_version}.tar.gz \\" \
+            "\n\t&& tar -xzf protobuf.tar.gz \\" \
+            "\n\t&& export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/local/lib64:/usr/lib64:/usr/bin:/usr/local/bin \\" \
+            "\n\t&& cd protobuf-${protobuf_version} \\" \
+            "\n\t&& ./configure && make && make install " \
+            "\n" >> ${file}
+    fi
+}
+
+# Install gnutls
+print_gnutls_install() {
+    local file=$1
+    local gnutls_version=$2
+    local os=$3
+
+    echo -e "\n\n# Install gnutls" >> ${file}
+
+    if [[ "${os}" == *"ubi"* ]]; then
+        echo -e "\nRUN wget --progress=dot:mega -O gnutls.tar.xz https://www.gnupg.org/ftp/gcrypt/gnutls/v3.3/gnutls-${gnutls_version}.tar.xz \\" \
+            "\n\t&& tar -xf gnutls.tar.xz \\" \
+            "\n\t&& cd gnutls-${gnutls_version} \\" \
+            "\n\t&& ./configure --disable-non-suiteb-curves && make && make install " \
+            "\n" >> ${file}
+    fi
 }
 
 # Install SBT
@@ -280,23 +410,73 @@ print_python_install() {
 print_criu_install() {
     local file=$1
     local criu_version=$2
+    local os=$3
+    local platform=$4
 
-    echo -e "ARG CRIU_VERSION=${criu_version}" \
-          "\nENV CRIU_VERSION=\$CRIU_VERSION" \
-          "\n\n# Install criu and set capabilities" \
-          "\nRUN wget --progress=dot:mega -O v\${CRIU_VERSION}.tar.gz https://github.com/checkpoint-restore/criu/archive/refs/tags/v\${CRIU_VERSION}.tar.gz \\" >> ${file}
+    if [[ "${os}" == *"ubi"* ]]; then
+        if [[ "${platform}" == *"x86-64"* ]]; then
+            echo -e "\nCOPY ${test}/resources/criu/x86_64/criu /usr/sbin/criu" >> ${file}
+
+            echo -e "\nCOPY ${test}/resources/criu/x86_64/libcriu.so /usr/lib64/libcriu.so.2.0" >> ${file}
+
+            echo -e "\nRUN chmod a+x /usr/sbin/criu \\" \
+                    "\n\t&& setcap cap_checkpoint_restore,cap_net_admin,cap_sys_ptrace=eip /usr/sbin/criu \\" \
+                    "\n\t&& cd /usr/lib64 \\" \
+                    "\n\t&& ln -s libcriu.so.2.0 libcriu.so \\" \
+                    "\n\t&& ln -s libcriu.so.2.0 libcriu.so.2 \\" \
+                    "\n\t&& cd / "  >> ${file}
+        else
+            echo "Criu binaries are not available for Platform ${platform}!"
+            exit 1
+        fi
+    else # for ubuntu
+        echo -e "ARG CRIU_VERSION=${criu_version}" \
+                "\nENV CRIU_VERSION=\$CRIU_VERSION" \
+                "\n\n# Install criu and set capabilities" \
+                "\nRUN wget --progress=dot:mega -O v\${CRIU_VERSION}.tar.gz https://github.com/checkpoint-restore/criu/archive/refs/tags/v\${CRIU_VERSION}.tar.gz \\" >> ${file}
+        
+        echo -e "\t&& tar -xzf v\${CRIU_VERSION}.tar.gz \\" \
+                "\n\t&& cd criu-\${CRIU_VERSION}  \\" \
+                "\n\t&& make \\" \
+                "\n\t&& make install \\" \
+                "\n\t&& cd .. \\" \
+                "\n\t&& rm -rf v\${CRIU_VERSION}.tar.gz criu-\${CRIU_VERSION} \\" \
+                "\n\t&& setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_admin,cap_sys_chroot,cap_sys_ptrace,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_audit_control=eip /usr/local/sbin/criu" \
+                "\n\n# Run ldconfig to discover newly installed shared libraries" \
+                "\nRUN for dir in lib lib64 ; do echo /usr/local/$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\" \
+                "\n\t&& ldconfig " \
+                "\n" >> ${file}
+        # echo -e "ARG CRIU_VERSION=${criu_version}" \
+        #     "\nENV CRIU_VERSION=\$CRIU_VERSION" \
+        #     "\n\n# Install criu and set capabilities" \
+        # echo -e "\nRUN yum -y --disablerepo=* --enablerepo=centos7-base install criu " >> ${file}
+        # echo -e "\nRUN setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_lease,cap_audit_control,cap_setfcap,cap_syslog=eip /usr/sbin/criu" >> ${file}
+    fi
+
+    # echo -e "ARG CRIU_VERSION=${criu_version}" \
+    #     "\nENV CRIU_VERSION=\$CRIU_VERSION" \
+    #     "\n\n# Install criu and set capabilities" \
+    #     "\nRUN cd /tmp \\" \
+    #     "\n\t&& wget --progress=dot:mega -O v\${CRIU_VERSION}.tar.gz https://github.com/checkpoint-restore/criu/archive/refs/tags/v\${CRIU_VERSION}.tar.gz \\" >> ${file}
     
-    echo -e "\t&& tar -xzf v\${CRIU_VERSION}.tar.gz \\" \
-            "\n\t&& cd criu-\${CRIU_VERSION}  \\" \
-            "\n\t&& make \\" \
-            "\n\t&& make install \\" \
-            "\n\t&& cd .. \\" \
-            "\n\t&& rm -rf v\${CRIU_VERSION}.tar.gz criu-\${CRIU_VERSION} \\" \
-            "\n\t&& setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_admin,cap_sys_chroot,cap_sys_ptrace,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_audit_control=eip /usr/local/sbin/criu" \
-            "\n\n# Run ldconfig to discover newly installed shared libraries" \
-            "\nRUN for dir in lib lib64 ; do echo /usr/local/$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\" \
-            "\n\t&& ldconfig " \
-            "\n" >> ${file}
+    # echo -e "\t&& tar -xzf v\${CRIU_VERSION}.tar.gz \\" \
+    #         "\n\t&& mv criu-\${CRIU_VERSION} criu-build \\" \
+    #         "\n\t&& cd criu-build  \\" \
+    #         "\n\t&& make \\" \
+    #         "\n\t&& make DESTDIR=/tmp/criu-\${CRIU_VERSION} install-lib install-criu \\" \
+    #         "\n\t&& cd .. \\" \
+    #         "\n\t&& rm -rf v\${CRIU_VERSION}.tar.gz criu-build" >> ${file}
+    # echo -e "\nCOPY --from=criu-builder /tmp/criu-\${CRIU_VERSION}/usr/local /usr/local" >> ${file}
+    # if [[ "${os}" == *"ubi"* ]]; then
+    #     echo -e "\nRUN setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_lease,cap_audit_control,cap_setfcap,cap_syslog=eip /usr/local/sbin/criu" >> ${file}
+    # else
+    #     echo -e "\nRUN setcap cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_admin,cap_sys_chroot,cap_sys_ptrace,cap_sys_admin,cap_sys_resource,cap_sys_time,cap_audit_control=eip /usr/local/sbin/criu" >> ${file}
+    # fi
+
+    # echo -e "\n\n# Run ldconfig to discover newly installed shared libraries" \
+    #         "\nRUN for dir in lib lib64 ; do echo /usr/local/$dir ; done > /etc/ld.so.conf.d/usr-local.conf \\" \
+    #         "\n\t&& ldconfig " \
+    #         "\n" >> ${file}
 }
 
 
@@ -359,6 +539,10 @@ print_test_files() {
                 "\nCOPY ${test}/test.sh /test.sh" \
                 "\nCOPY test_base_functions.sh test_base_functions.sh\n" >> ${file}
     fi
+    if [[ "${test}" == *"portable"* ]]; then
+        echo -e "# This is the script used to restore portable test later." \
+            "\nCOPY ${test}/test_restore.sh /test_restore.sh" >> ${file}
+    fi
     if [[ ! -z ${localPropertyFile} ]]; then
         echo -e "# This local property file is needed to set up user preferred properties." \
             "\nCOPY ${test}/${localPropertyFile} \${TEST_HOME}/${localPropertyFile}\n" >> ${file}
@@ -386,6 +570,10 @@ print_clone_project() {
 
     # Cause Test name to be capitalized
     test_tag="$(sanitize_test_names ${test} | tr a-z A-Z)_TAG"
+    git_branch_tag="master"
+    if [[ "$test_tag" != *"PORTABLE"* ]]; then
+        git_branch_tag=$test_tag
+    fi
 
     # Get Github folder name
     folder="$(echo ${github_url} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
@@ -394,7 +582,7 @@ print_clone_project() {
             "\nENV ${test_tag}=\$${test_tag}" \
             "\nRUN git clone ${github_url}" \
             "\nWORKDIR /${folder}/" \
-            "\nRUN git checkout \$${test_tag}" \
+            "\nRUN git checkout \$${git_branch_tag}" \
             "\nWORKDIR /" \
             "\n" >> ${file}
 }
@@ -447,18 +635,20 @@ generate_dockerfile() {
     os=$5
     package=$6
     build=$7
-    check_external_custom_test=$8
+    platform=$8
+    check_external_custom_test=$9
+
 
     if [[ ${check_external_custom_test} -eq 1 ]]; then
         tag_version=${EXTERNAL_REPO_BRANCH}
     fi
 
     if [[ ${check_external_custom_test} -eq 1 ]]; then
-        set_external_custom_test_info ${test} ${check_external_custom_test}
+        set_external_custom_test_info ${test} ${check_external_custom_test} ${os}
     else
-        set_test_info ${test} ${check_external_custom_test}
+        set_test_info ${test} ${check_external_custom_test} ${os}
     fi
-    packages=$(echo ${os}_packages | sed 's/-/_/')
+    packages=$(echo ubuntu_packages | sed 's/-/_/')
     jhome="/opt/java/openjdk"
 
     mkdir -p `dirname ${file}` 2>/dev/null
@@ -471,11 +661,23 @@ generate_dockerfile() {
     print_${os}_pkg ${file} "${!packages}";
 
     if [[ ! -z ${ant_version} ]]; then
-        print_ant_install ${file} ${ant_version};
+        print_ant_install ${file} ${ant_version} ${os};
     fi
 
     if [[ ! -z ${ant_contrib_version} ]]; then
-        print_ant_contrib_install ${file} ${ant_contrib_version};
+        print_ant_contrib_install ${file} ${ant_contrib_version} ${os};
+    fi
+
+    if [[ ! -z ${gcc_version} ]]; then
+        print_gcc_install ${file} ${gcc_version} ${os};
+    fi
+
+    if [[ ! -z ${protobuf_version} ]]; then
+        print_protobuf_install ${file} ${protobuf_version} ${os};
+    fi
+
+    if [[ ! -z ${gnutls_version} ]]; then
+        print_gnutls_install ${file} ${gnutls_version} ${os};
     fi
 
     if [[ ! -z ${ivy_version} ]]; then
@@ -499,7 +701,11 @@ generate_dockerfile() {
     fi
 
     if [[ ! -z ${criu_version} ]]; then
-        print_criu_install ${file} ${criu_version};
+        print_criu_install ${file} ${criu_version} ${os} ${platform};
+    fi
+
+    if [[ ! -z ${jdk_install} ]]; then
+        print_jdk_install ${file} ${os} ${platform};
     fi
     
     if [[ ! -z ${maven_version} ]]; then
