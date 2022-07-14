@@ -21,7 +21,7 @@ supported_jvms="hotspot openj9"
 
 # Supported distros
 # Distros Not Included: windowsservercore-ltsc2016
-supported_os="ubuntu"
+supported_os="ubuntu ubi"
 
 # Supported packges
 supported_packages="jdk jre"
@@ -30,7 +30,7 @@ supported_packages="jdk jre"
 supported_builds="full"
 
 # Supported tests
-supported_tests="external_custom camel criu-portable-checkpoint criu-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
+supported_tests="external_custom camel criu-portable-checkpoint criu-portable-restore criu-ubi-portable-checkpoint criu-ubi-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
 
 function check_version() {
     version=$1
@@ -182,6 +182,7 @@ function getProperty() {
 function set_external_custom_test_info(){
     test=$1
     check_external_custom_test=$2
+    os=$3
     github_url="${EXTERNAL_CUSTOM_REPO}"
     test_command="${EXTERNAL_TEST_CMD}"
     test_results="testResults"
@@ -195,6 +196,7 @@ function set_external_custom_test_info(){
 function set_test_info() {
     test=$1
     check_external_custom_test=$2
+    os=$3
     cd ../
     path_to_file=$(pwd)
     echo ${path_to_file}    
@@ -203,6 +205,9 @@ function set_test_info() {
     test_options=$(getProperty "test_options")
     test_results=$(getProperty "test_results")
     ant_version=$(getProperty "ant_version")
+    gcc_version=$(getProperty "gcc_version")
+    protobuf_version=$(getProperty "protobuf_version")
+    gnutls_version=$(getProperty "gnutls_version")
     ivy_version=$(getProperty "ivy_version")
     tag_version=$(getProperty "tag_version")
     gradle_version=$(getProperty "gradle_version")

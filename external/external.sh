@@ -41,7 +41,7 @@ usage () {
 	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_url DOCKER_REGISTRY_URL] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--load|--clean]'
 }
 
-supported_tests="external_custom camel criu-portable-checkpoint  criu-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
+supported_tests="external_custom camel criu-portable-checkpoint  criu-portable-restore criu-ubi-portable-checkpoint criu-ubi-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
 
 function check_test() {
     test=$1
@@ -155,7 +155,8 @@ function parse_tag() {
 	
 	# set DOCKER_OS
 	case $tag in
-	
+		*ubi*) 
+			docker_os=ubi;;
 		*ubuntu*|*latest*|*nightly*) 
 	   		docker_os=ubuntu;;
    		*) echo "Unable to recognize DOCKER_OS from DOCKERIMAGE_TAG = $tag!";;
@@ -264,5 +265,7 @@ if [ $command_type == "clean" ]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
 	docker rm -f restore-checkpoint
-	docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
+	#  testtest temp keep image for debugging
+	# docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
+	docker rm -f $test-test
 fi

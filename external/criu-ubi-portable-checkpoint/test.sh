@@ -13,29 +13,30 @@
 #
 
 source $(dirname "$0")/test_base_functions.sh
-# Set up Java to be used by the functional test
+# Criu needs to move mounted jdk inside docker, since restore requires generated files in jdk
+MOUNTED_JDK_DIR="/opt/java/openjdk"
+New_JDK_DIR="/internaljdk/java/openjdk"
+if [ -d "$MOUNTED_JDK_DIR" ]; then
+  mkdir -p $New_JDK_DIR
+  cp -r $MOUNTED_JDK_DIR/* $New_JDK_DIR/
+  export TEST_JDK_HOME=$New_JDK_DIR
+  echo "TEST_JDK_HOME is : $TEST_JDK_HOME"
+else
+  echo "No JDK found!"
+  exit 1
+fi
+
 echo_setup
-export TEST_JDK_HOME=$JAVA_HOME
-echo "TEST_JDK_HOME is : $TEST_JDK_HOME"
 export JDK_VERSION=
 echo "JDK_VERSION has been unset, use auto-detect instead."
-# export DYNAMIC_COMPILE=true
+export DYNAMIC_COMPILE=true
 export BUILD_LIST=functional
 
 cd /aqa-tests
-# !!!!testtesttest
 ./get.sh
 cd /aqa-tests/TKG
 
 set -e
-
-# echo "testtest2 Building functional test material..."
-make compile
-
-echo "testteset3 Generating make files and running the functional tests"
+echo "Generating make files and running the tests"
 make $1
-
-# get current container ID
-# cat /etc/hostname
-
 set +e

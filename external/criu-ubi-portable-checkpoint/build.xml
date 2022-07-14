@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<project name="criu-portable-restore" default="build" basedir=".">
+<project name="criu-ubi-portable-checkpoint" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-		Build criu-portable-restore Test
+		Build criu-ubi-portable-checkpoint Test
 	</description>
 	<import file="${TEST_ROOT}/external/build.xml"/>
 
 	<!-- set properties for this build -->
-	<property name="TEST" value="criu-portable-restore" />
+	<property name="TEST" value="criu-ubi-portable-checkpoint" />
 	<property name="DEST" value="${BUILD_ROOT}/external/${TEST}" />
 	<property name="src" location="." />
 
@@ -15,7 +15,7 @@
 		<mkdir dir="${DEST}"/>
 	</target>
 
-	<target name="dist" depends="move_scripts,clean_image" description="generate the distribution">
+	<target name="dist" depends="move_scripts,clean_image,build_image" description="generate the distribution">
 		<copy todir="${DEST}">
 			<fileset dir="${src}" includes="*.xml, *.mk"/>
 		</copy>
