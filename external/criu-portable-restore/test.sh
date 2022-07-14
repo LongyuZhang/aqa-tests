@@ -24,7 +24,7 @@ export BUILD_LIST=functional
 
 cd /aqa-tests
 # !!!!testtesttest
-./get.sh --openj9_repo "https://github.com/longyuzhang/openj9.git" --openj9_branch "port1"
+./get.sh
 cd /aqa-tests/TKG
 
 set -e

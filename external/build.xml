@@ -43,7 +43,7 @@
 			<property name="extra_docker_args" value=""/>
 		</else>
 	</if>
-	
+
 	<target name="init">
 		<mkdir dir="${DEST_EXTERNAL}" />
 	</target>
@@ -68,7 +68,7 @@
 	</target>
 
 	<target name="clean_image"  description="clean test docker image if there is one">
-		<echo message="Executing external.sh --clean --dir ${TEST} --tag ${dockerImageTag} --version ${JDK_VERSION} --impl ${JDK_IMPL} " />						
+		<echo message="Executing external.sh --clean --dir ${TEST} --tag ${dockerImageTag} --docker_os ${docker_os} --version ${JDK_VERSION} --impl ${JDK_IMPL} " />						
 		<exec executable="bash">
 			<arg value="${DEST_EXTERNAL}/external.sh"/>
 			<arg value="--clean"/>
@@ -76,6 +76,8 @@
 			<arg value="${TEST}"/>
 			<arg value="--tag"/>
 			<arg value="${dockerImageTag}"/>
+			<arg value="--docker_os"/>
+			<arg value="${docker_os}"/>
 			<arg value="--version"/>
 			<arg value="${JDK_VERSION}"/>
 			<arg value="--impl"/>
@@ -93,7 +95,7 @@
 	</target>
 
 	<target name="build_image" description="build test dockerfile">
-		<echo message="Executing external.sh --build --dir ${TEST} --tag ${dockerImageTag} --version ${JDK_VERSION} --impl ${JDK_IMPL} --docker_args ${extra_docker_args} " />
+		<echo message="Executing external.sh --build --dir ${TEST} --tag ${dockerImageTag} --docker_os ${docker_os} --version ${JDK_VERSION} --impl ${JDK_IMPL} --docker_args ${extra_docker_args} " />
 		<exec executable="bash" failonerror="true">
 			<arg value="${DEST_EXTERNAL}/external.sh"/>
 			<arg value="--build"/>
@@ -101,6 +103,8 @@
 			<arg value="${TEST}"/>
 			<arg value="--tag"/>
 			<arg value="${dockerImageTag}"/>
+			<arg value="--docker_os"/>
+			<arg value="${docker_os}"/>
 			<arg value="--version"/>
 			<arg value="${JDK_VERSION}"/>
 			<arg value="--impl"/>
