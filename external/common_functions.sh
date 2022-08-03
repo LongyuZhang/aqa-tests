@@ -21,7 +21,7 @@ supported_jvms="hotspot openj9"
 
 # Supported distros
 # Distros Not Included: windowsservercore-ltsc2016
-supported_os="ubuntu"
+supported_os="ubuntu ubi"
 
 # Supported packges
 supported_packages="jdk jre"
@@ -30,7 +30,7 @@ supported_packages="jdk jre"
 supported_builds="full"
 
 # Supported tests
-supported_tests="external_custom camel derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
+supported_tests="external_custom camel criu-portable-checkpoint criu-portable-restore criu-ubi-portable-checkpoint criu-ubi-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring zookeeper"
 
 function check_version() {
     version=$1
@@ -171,6 +171,12 @@ function set_build() {
     fi
 }
 
+# Set a platform
+function set_platform() {
+    # TO-DO: Add supported_platforms when portable tests support more platforms
+    platform=$1
+}
+
 # Reading properties of test.properties file
 function getProperty() {
     PROP_KEY=$1
@@ -182,6 +188,7 @@ function getProperty() {
 function set_external_custom_test_info(){
     test=$1
     check_external_custom_test=$2
+    os=$3
     github_url="${EXTERNAL_CUSTOM_REPO}"
     test_command="${EXTERNAL_TEST_CMD}"
     test_results="testResults"
@@ -195,6 +202,7 @@ function set_external_custom_test_info(){
 function set_test_info() {
     test=$1
     check_external_custom_test=$2
+    os=$3
     cd ../
     path_to_file=$(pwd)
     echo ${path_to_file}    
@@ -204,6 +212,7 @@ function set_test_info() {
     test_results=$(getProperty "test_results")
     ant_version=$(getProperty "ant_version")
     ivy_version=$(getProperty "ivy_version")
+    jdk_install=$(getProperty "jdk_install")
     tag_version=$(getProperty "tag_version")
     gradle_version=$(getProperty "gradle_version")
     sbt_version=$(getProperty "sbt_version")
@@ -215,6 +224,7 @@ function set_test_info() {
     environment_variable=$(getProperty "environment_variable")
     localPropertyFile=$(getProperty "localPropertyFile")
     ubuntu_packages=$(getProperty "ubuntu_packages")
+    ubi_packages=$(getProperty "ubi_packages")
 }
 
 function cleanup_images() {
