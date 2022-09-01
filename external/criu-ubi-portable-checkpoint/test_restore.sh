@@ -23,9 +23,13 @@ result_code=0
 for checkpoint_folder in $checkpoint_folders
 do
     cd $checkpoint_folder
+    echo "start restore ..."
     criu restore -D ./cpData --shell-job
+    echo "finished restore ..."
     cur_test_name="$(basename ${checkpoint_folder})"
+    echo "start grep result ..."
     result_restore=$(grep "Post-checkpoint" $output_file)
+    echo "finished grep result ..."
     if [[ $result_restore ]]; then
         echo "Test $cur_test_name passed"
     else
