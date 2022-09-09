@@ -15,6 +15,10 @@
 source $(dirname "$0")/test_base_functions.sh
 # This script is used as the new entrypoint for saved criu-restore-ready-with-jdk docker image
 echo "Restore tests from Checkpoint"
+echo "testtest GLIBC version"
+ld --version
+
+
 checkpoint_folders="/aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*"
 output_file="testOutput" # File "testOutput" is used to store all outputs
 result_code=0
@@ -22,7 +26,7 @@ result_code=0
 for checkpoint_folder in $checkpoint_folders
 do
     cd $checkpoint_folder
-    criu restore -D ./cpData --shell-job
+    criu restore -D ./cpData --cpu-cap=none --shell-job
     cur_test_name="$(basename ${checkpoint_folder})"
     result_restore=$(grep "Post-checkpoint" $output_file)
     if [[ $result_restore ]]; then

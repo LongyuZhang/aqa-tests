@@ -215,6 +215,11 @@ function docker-ip() {
 
 parseCommandLineArgs "$@"
 
+echo "testtest export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
+export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
+echo "testtest export LD_BIND_NOT=on";
+export LD_BIND_NOT=on
+
 # set DOCKER_HOST env variables 
 # DOCKER_HOST=$(docker-ip $test-test)
 
@@ -224,6 +229,8 @@ if [ $command_type == "build" ]; then
 fi
 
 if [ $command_type == "run" ]; then
+
+	
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
@@ -276,7 +283,7 @@ if [ $command_type == "load" ]; then
 			echo "Private Docker Registry login starts:"
 			echo $DOCKER_REGISTRY_CREDENTIALS_PSW | docker login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
 			
-			current_micro_architecture=$node_label_micro_architecture
+			current_micro_architecture=""
 			docker pull $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}
 			docker image ls
 			mount_options=""
