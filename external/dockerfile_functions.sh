@@ -477,7 +477,7 @@ print_clone_project() {
 
     # Cause Test name to be capitalized
     test_tag="$(sanitize_test_names ${test} | tr a-z A-Z)_TAG"
-    git_branch_tag="master"
+    git_branch_tag="test3"
     if [[ "$test_tag" != *"PORTABLE"* ]]; then
         git_branch_tag=$test_tag
     fi
@@ -487,9 +487,9 @@ print_clone_project() {
 
     echo -e "# Clone ${test} source" \
             "\nENV ${test_tag}=\$${test_tag}" \
-            "\nRUN git clone ${github_url}" \
+            "\nRUN git clone https://github.com/longyuzhang/aqa-tests.git" \
             "\nWORKDIR /${folder}/" \
-            "\nRUN git checkout \$${git_branch_tag}" \
+            "\nRUN git checkout test3" \
             "\nWORKDIR /" \
             "\n" >> ${file}
 }

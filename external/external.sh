@@ -276,7 +276,7 @@ if [ $command_type == "load" ]; then
 			echo "Private Docker Registry login starts:"
 			echo $DOCKER_REGISTRY_CREDENTIALS_PSW | docker login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
 			
-			current_micro_architecture=$node_label_micro_architecture
+			current_micro_architecture=""
 			docker pull $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}
 			docker image ls
 			mount_options=""
@@ -285,8 +285,10 @@ if [ $command_type == "load" ]; then
 				mount_options="$mountV"
 			fi
 			# restore
-			echo "docker run --privileged $mount_options --name restore-test --rm $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}"
-			docker run --privileged $mount_options --name restore-test --rm $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}
+
+
+			echo "docker run --privileged --cpu-cap=none $mount_options --name restore-test --rm $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}"
+			docker run --privileged --cpu-cap=none $mount_options --name restore-test --rm $docker_registry_url/criu-restore-ready-with-jdk:${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${current_micro_architecture}
 
 			docker logout $docker_registry_url
 		else
