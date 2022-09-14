@@ -126,6 +126,7 @@ print_ubuntu_pkg() {
 
     echo -e "RUN apt-get update \\" \
             "\n\t&& apt-get install -qq -y --no-install-recommends software-properties-common \\" \
+            "\n\t&& apt-get install -qq -y --no-install-recommends gnupg \\" \
             "\n\t&& add-apt-repository ppa:ubuntu-toolchain-r/test \\" \
             "\n\t&& apt-get update \\" \
             "\n\t&& apt-get install -y --no-install-recommends ${packages} \\" \
