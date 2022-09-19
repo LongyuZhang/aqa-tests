@@ -235,30 +235,30 @@ if [ $command_type == "run" ]; then
 		else
 			docker run --privileged $mountV --name $test-test adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type;
 		fi
-		if [ $reportsrc != "false" ]; then
-			docker cp $test-test:$reportsrc $reportdst/external_test_reports;
-		fi
+		# if [ $reportsrc != "false" ]; then
+		# 	docker cp $test-test:$reportsrc $reportdst/external_test_reports;
+		# fi
 		
-		if [ $portable != "false" ]; then
-			if [[ $docker_registry_url ]]; then
-				echo "Private Docker Registry login starts:"
-				echo $DOCKER_REGISTRY_CREDENTIALS_PSW | docker login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
+		# if [ $portable != "false" ]; then
+		# 	if [[ $docker_registry_url ]]; then
+		# 		echo "Private Docker Registry login starts:"
+		# 		echo $DOCKER_REGISTRY_CREDENTIALS_PSW | docker login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
 				
-				restore_ready_checkpoint_image="criu-restore-ready-with-jdk"
-				restore_ready_checkpoint_tag="${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${node_label_micro_architecture}"
-				tagged_restore_ready_checkpoint_image="${docker_registry_url}/${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag}"
-				echo "tagged_restore_ready_checkpoint_image is $tagged_restore_ready_checkpoint_image"
-				docker commit --change='ENTRYPOINT ["/bin/bash", "/test_restore.sh"]' $test-test $tagged_restore_ready_checkpoint_image
+		# 		restore_ready_checkpoint_image="criu-restore-ready-with-jdk"
+		# 		restore_ready_checkpoint_tag="${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${node_label_micro_architecture}"
+		# 		tagged_restore_ready_checkpoint_image="${docker_registry_url}/${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag}"
+		# 		echo "tagged_restore_ready_checkpoint_image is $tagged_restore_ready_checkpoint_image"
+		# 		docker commit --change='ENTRYPOINT ["/bin/bash", "/test_restore.sh"]' $test-test $tagged_restore_ready_checkpoint_image
 
-				echo "Pushing docker image ${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag} to docker registry"
-				docker push $tagged_restore_ready_checkpoint_image
+		# 		echo "Pushing docker image ${restore_ready_checkpoint_image}:${restore_ready_checkpoint_tag} to docker registry"
+		# 		docker push $tagged_restore_ready_checkpoint_image
 
-				docker logout $docker_registry_url
-			else
-				echo "Docker Registry is not available on this Jenkins"
-				exit 1
-			fi
-		fi
+		# 		docker logout $docker_registry_url
+		# 	else
+		# 		echo "Docker Registry is not available on this Jenkins"
+		# 		exit 1
+		# 	fi
+		# fi
 	else
 		echo "docker run --privileged $mountV --name $test-test --rm adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type $testtarget"
 		if [ -n "$testtarget" ]; then
