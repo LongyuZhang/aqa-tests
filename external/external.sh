@@ -296,7 +296,8 @@ if [ $command_type == "load" ]; then
 	else # no need private docker registry
 		docker_image_name="eclipse-temurin:${JDK_VERSION}-jdk"
 		if [[ "${JDK_IMPL}" == *"openj9"* ]]; then
-			docker_image_name="ibm-semeru-runtimes:open-${JDK_VERSION}-jdk"
+			# Need to switch to "open-${JDK_VERSION}-jdk" after it suppports more arch
+			docker_image_name="ibm-semeru-runtimes:open-${JDK_VERSION}-jdk-focal"
 		fi
 		docker pull $docker_image_name
 		test_script_path="$test_root/external/$test/test.sh"
