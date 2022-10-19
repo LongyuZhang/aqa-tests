@@ -22,6 +22,9 @@
 		<features>
 			<feature>CRIU:required</feature>
 		</features>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
 		<levels>
 			<level>sanity</level>
 		</levels>
