@@ -91,7 +91,7 @@ print_image_args() {
     if [[ "${vm}" == "openj9" ]]; then
         if  [[ "${os}" == "ubuntu" ]]; then
             image_name="ibm-semeru-runtimes"
-            tag=open-${tag}-focal
+            tag=open-${tag}
         else
             # os is ubi
             image_name="registry.access.redhat.com/ubi8/ubi"
@@ -382,7 +382,7 @@ print_criu_install() {
         # Method 2: build from source code
         echo -e "\n# Install dependent packages for criu" \
                 "\nRUN apt-get update \\" \
-                "\n\t&& apt-get install -y --no-install-recommends iptables libbsd-dev libcap-dev libdrm-dev libnet1-dev libgnutls28-dev libgnutls30 libnftables-dev libnl-3-dev libprotobuf-dev python3-distutils protobuf-c-compiler protobuf-compiler xmlto libssl-dev python3-future libxt-dev libfontconfig1-dev python-protobuf nftables libcups2-dev libasound2-dev python-ipaddress libxtst-dev libexpat1-dev libfontconfig libaio-dev libffi-dev libx11-dev libprotobuf-c-dev libnuma-dev libfreetype6-dev libxrandr-dev libxrender-dev libelf-dev libxext-dev libdwarf-dev" \
+                "\n\t&& apt-get install -y --no-install-recommends iptables libbsd-dev libcap-dev libdrm-dev libnet1-dev libgnutls28-dev libgnutls30 libnftables-dev libnl-3-dev libprotobuf-dev python3-distutils protobuf-c-compiler protobuf-compiler xmlto libssl-dev python3-future libxt-dev libfontconfig1-dev python3-protobuf nftables libcups2-dev libasound2-dev libxtst-dev libexpat1-dev libfontconfig libaio-dev libffi-dev libx11-dev libprotobuf-c-dev libnuma-dev libfreetype6-dev libxrandr-dev libxrender-dev libelf-dev libxext-dev libdwarf-dev" \
                 "\n" >> ${file}
 
         echo -e "\n# Build criu and set capabilities" \
