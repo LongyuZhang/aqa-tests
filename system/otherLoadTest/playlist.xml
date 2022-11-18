@@ -56,6 +56,41 @@
 		</groups>
 	</test>
 	<test>
+		<testCaseName>MiniMix_jitserver_aot_5m</testCaseName>
+		<variations>
+			<variation>Mode150</variation>
+			<variation>Mode650</variation>
+			<variation>Mode1000</variation>
+		</variations>
+		<command>
+		killall -9 "$(TEST_JDK_HOME)/bin/jitserver" &amp;&amp; \
+		$(JAVA_COMMAND) -Xshareclasses:destroyAll &amp;&amp; \
+		$(JAVA_COMMAND) -Xshareclasses:groupAccess,destroyAll &amp;&amp; \
+
+		$(TEST_JDK_HOME)/bin/jitserver -XX:+JITServerUseAOTCache  -Xjit:verbose={JITServer},vlog=vlogfile &amp;&amp;&amp; \
+
+
+		$(SYSTEMTEST_CMD_TEMPLATE) -test=MixedLoadTest -test-args=$(Q)timeLimit=5m$(Q) -java-args-execute-initial=$(Q)$(ADD_OPENS_CMD) -Xshareclasses -XX:+JITServerUseAOTCache$(Q) &amp;&amp; \
+		killall -9 "$(TEST_JDK_HOME)/bin/jitserver" &amp;&amp; \
+		$(JAVA_COMMAND) -Xshareclasses:destroyAll &amp;&amp; \
+		$(JAVA_COMMAND) -Xshareclasses:groupAccess,destroyAll &amp;&amp; \
+		echo "cache cleanup done" &amp;&amp; \
+		$(TEST_JDK_HOME)/bin/jitserver -XX:+JITServerUseAOTCache &amp;&amp;&amp; \
+		$(SYSTEMTEST_CMD_TEMPLATE) -test=MixedLoadTest -test-args=$(Q)timeLimit=5m$(Q) -java-args-execute-initial=$(Q)$(ADD_OPENS_CMD) -Xshareclasses -XX:+JITServerUseAOTCache$(Q) &amp;&amp; \
+		$(TEST_STATUS); \
+		killall -9 "$(TEST_JDK_HOME)/bin/jitserver"
+		</command>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
+	</test>
+	<test>
 		<testCaseName>MiniMix_aot_5m</testCaseName>
 		<disables>
 			<disable>
