@@ -358,8 +358,4 @@ if [ $command_type == "clean" ]; then
 	if [[ ${test} == 'external_custom' ]]; then
 			test="$(echo ${EXTERNAL_CUSTOM_REPO} | awk -F'/' '{print $NF}' | sed 's/.git//g')"
 	fi
-	docker rm -f $test-test; docker rmi -f adoptopenjdk-$test-test:${JDK_VERSION}-$package-$docker_os-${JDK_IMPL}-$build_type
-	docker rm -f restore-test
-	docker rmi -f ${docker_registry_url}/${job_name}/${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${node_label_micro_architecture}:latest
-	docker rmi -f ${docker_registry_url}/${criu_default_image_job_name}/${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${node_label_micro_architecture}:latest
 fi
