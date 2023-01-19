@@ -359,7 +359,7 @@ print_criu_install() {
 
             echo -e "\nRUN chmod a+x /usr/sbin/criu \\" \
                     "\n\t&& setcap cap_checkpoint_restore,cap_net_admin,cap_sys_ptrace=eip /usr/sbin/criu \\" \
-                    "\n\t&& export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load \\" \
+                    "\n\t&& export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load \\" \
                     "\n\t&& cd /usr/lib64 \\" \
                     "\n\t&& ln -s libcriu.so.2.0 libcriu.so \\" \
                     "\n\t&& ln -s libcriu.so.2.0 libcriu.so.2 \\" \
