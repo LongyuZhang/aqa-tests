@@ -13,11 +13,15 @@
 
 	<target name="init">
 		<mkdir dir="${DEST}"/>
+		<mkdir dir="${DEST}/jdkCurrent"/>
 	</target>
 
 	<target name="dist" description="generate the distribution">
 		<copy todir="${DEST}">
-			<fileset dir="${src}" includes="*.xml, *.mk, *.sh"/>
+			<fileset dir="${src}" includes="*.xml, *.mk, *.sh, Dockerfile.*"/>
+		</copy>
+		<copy todir="${DEST}/jdkCurrent">
+			<fileset dir="${TEST_JDK_HOME}" includes="**"/>
 		</copy>
 	</target>
 

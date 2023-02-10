@@ -15,6 +15,7 @@
 set -e
 
 pingPerfZipPath=""
+jvmTestPath=""
 
 prepare() {
     echo "prepare at $(pwd)..."
@@ -38,7 +39,12 @@ prepare() {
 
 buildImage() {
     echo "build image at $(pwd)..."
-    sudo podman build -t icr.io/appcafe/open-liberty:beta-instanton -f ci.docker/releases/latest/beta-instanton/Dockerfile.ubi.openjdk17 ci.docker/releases/latest/beta-instanton
+    sudo podman build -t icr.io/appcafe/open-liberty:initial -f ci.docker/releases/latest/beta-instanton/Dockerfile.ubi.openjdk17 ci.docker/releases/latest/beta-instanton
+    (
+        cd $jvmTestPath || exit
+        sudo podman build -t icr.io/appcafe/open-liberty:beta-instanton -f Dockerfile.additional .
+    )
+    
     sudo podman build -t ol-instanton-test-pingperf:latest -f Dockerfile.pingperf .
 }
 
@@ -132,6 +138,7 @@ testCreateImageAndPrivilegedRestore() {
 
 if [ "$1" == "prepare" ]; then
     pingPerfZipPath=$2
+    jvmTestPath=$3
     prepare
 elif [ "$1" == "buildImage" ]; then
     buildImage
@@ -149,6 +156,7 @@ elif [ "$1" == "clean" ]; then
     clean
 elif [ "$1" == "testCreateRestoreImageOnly" ]; then
     pingPerfZipPath=$2
+    jvmTestPath=$3
     testCreateRestoreImageOnly
 elif [ "$1" == "testUnprivilegedRestoreOnly" ]; then
     testUnprivilegedRestoreOnly
@@ -156,9 +164,11 @@ elif [ "$1" == "testPrivilegedRestoreOnly" ]; then
     testPrivilegedRestoreOnly
 elif [ "$1" == "testCreateImageAndUnprivilegedRestore" ]; then
     pingPerfZipPath=$2
+    jvmTestPath=$3
     testCreateImageAndUnprivilegedRestore
 elif [ "$1" == "testCreateImageAndPrivilegedRestore" ]; then
     pingPerfZipPath=$2
+    jvmTestPath=$3
     testCreateImageAndPrivilegedRestore
 else
     echo "unknown command"

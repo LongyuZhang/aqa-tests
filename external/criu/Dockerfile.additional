@@ -1,0 +1,26 @@
+FROM icr.io/appcafe/open-liberty:initial
+
+USER root
+
+RUN ls -al opt/java/openjdk
+
+
+RUN rm -rf /opt/java/openjdk/*
+COPY jdkCurrent /opt/java/openjdk/
+
+RUN ls -al /opt/java/openjdk
+
+RUN chmod -R 777 /opt
+
+RUN /opt/java/openjdk/bin/java --version
+
+USER 1001
+
+
+RUN ls -al opt/java/openjdk
+
+
+EXPOSE 9080 9443
+
+ENTRYPOINT ["/opt/ol/helpers/runtime/docker-server.sh"]
+CMD ["/opt/ol/wlp/bin/server", "run", "defaultServer"]
