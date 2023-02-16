@@ -39,6 +39,7 @@ prepare() {
         libertyDockerfilePath="releases/latest/beta-instanton/Dockerfile.ubi.openjdk17"
         sed -i "s:ENV JAVA_VERSION jdk-17.0.4.1+1: :" $libertyDockerfilePath
         sed -i '/USER 1001.*/a RUN \/opt\/java\/openjdk\/bin\/java  --version' $libertyDockerfilePath
+        sed -i '/USER 1001.*/a RUN export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load' $libertyDockerfilePath
 
         commandToRemove='tar -xf /tmp/openjdk.tar.xz --strip-components=1; \\'
         commandAfterRemovedOne="rm -rf /tmp/openjdk.tar.xz;"
@@ -48,7 +49,16 @@ prepare() {
  
         mkdir releases/latest/beta-instanton/NEWJDK
         cp -r $testJDKPath/. releases/latest/beta-instanton/NEWJDK/
+
+
+        #  test
+        sed -i "s:cap_checkpoint_restore:cap_sys_admin,40:" $libertyDockerfilePath
     )
+
+    # echo "setcap 40,cap_sys_ptrace,cap_sys_admin=eip /usr/local/sbin/criu";
+    # setcap 40,cap_sys_ptrace,cap_sys_admin=eip /usr/local/sbin/criu
+    echo "export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
+    export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
 }
 
 buildImage() {
@@ -59,7 +69,7 @@ buildImage() {
 
 createRestoreImage() {
     echo "create restore image ..."
-    sudo podman run --name ol-instanton-test-checkpoint-container --privileged --env WLP_CHECKPOINT=applications ol-instanton-test-pingperf:latest
+    sudo podman run --name ol-instanton-test-checkpoint-container --privileged --cap-add=CHECKPOINT_RESTORE --cap-add=NET_ADMIN --cap-add=SYS_PTRACE  --env WLP_CHECKPOINT=applications ol-instanton-test-pingperf:latest
     sudo podman commit ol-instanton-test-checkpoint-container ol-instanton-test-pingperf-restore
     sudo podman rm ol-instanton-test-checkpoint-container
 }
