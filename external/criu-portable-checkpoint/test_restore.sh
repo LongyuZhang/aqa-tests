@@ -20,6 +20,9 @@ echo "export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
 echo "export LD_BIND_NOT=on";
 export LD_BIND_NOT=on
+echo "TEST_JDK_HOME is $TEST_JDK_HOME";
+$TEST_JDK_HOME/bin/java -version
+java -version
 
 checkpoint_folders="/aqa-tests/TKG/output_*/cmdLineTester_criu_keepCheckpoint*"
 output_file="testOutput" # File "testOutput" is used to store all outputs
