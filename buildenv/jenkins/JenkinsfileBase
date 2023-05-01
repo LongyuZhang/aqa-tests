@@ -10,6 +10,11 @@ def makeTest(testParam) {
 		sh "$tearDownCmd"
 		if (env.DOCKER_REGISTRY_URL && env.DOCKER_REGISTRY_URL_CREDENTIAL_ID) {
 			withCredentials([usernamePassword(credentialsId: "${env.DOCKER_REGISTRY_URL_CREDENTIAL_ID}", usernameVariable: 'DOCKER_REGISTRY_CREDENTIALS_USR', passwordVariable: 'DOCKER_REGISTRY_CREDENTIALS_PSW')]) {
+				sh "pwd"
+				sh "echo 'herehere'"
+				sh "touch thisfile"
+				sh "echo $DOCKER_REGISTRY_CREDENTIALS_USR > thisfile"
+				sh "echo $DOCKER_REGISTRY_CREDENTIALS_PSW >> thisfile"
 				sh "$makeTestCmd"
 			}
 		} else {
