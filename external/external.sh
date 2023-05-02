@@ -48,6 +48,8 @@ criu_combo_os_microarch_list=""
 docker_registry_required="false"
 docker_registry_url=""
 docker_registry_dir=""
+base_docker_registry_required="false"
+base_docker_registry_dir=""
 reportdst="false"
 reportsrc="false"
 docker_args=""
@@ -57,7 +59,7 @@ imageArg=""
 
 
 usage () {
-	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--docker_os docker_os][--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_required docker_registry_required] [--docker_registry_url DOCKER_REGISTRY_URL] [--docker_registry_dir DOCKER_REGISTRY_DIR] [--criu_combo_os_microarch_list CRIU_XLINUX_COMBO_LIST] [--mount_jdk mount_jdk] [--test_root TEST_ROOT] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--load|--clean]'
+	echo 'Usage : external.sh  --dir TESTDIR --tag DOCKERIMAGE_TAG --version JDK_VERSION --impl JDK_IMPL [--docker_os docker_os][--platform PLATFORM] [--portable portable] [--node_name node_name] [--node_labels node_labels] [--docker_registry_required docker_registry_required] [--docker_registry_url DOCKER_REGISTRY_URL] [--docker_registry_dir DOCKER_REGISTRY_DIR] [--base_docker_registry_required baseDockerRegistryRequired] [--criu_combo_os_microarch_list CRIU_XLINUX_COMBO_LIST] [--mount_jdk mount_jdk] [--test_root TEST_ROOT] [--reportsrc appReportDir] [--reportdst REPORTDIR] [--testtarget target] [--docker_args EXTRA_DOCKER_ARGS] [--build|--run|--load|--clean]'
 }
 
 supported_tests="external_custom aot camel criu-portable-checkpoint  criu-portable-restore criu-ubi-portable-checkpoint criu-ubi-portable-restore derby elasticsearch jacoco jenkins functional-test kafka lucene-solr openliberty-mp-tck payara-mp-tck quarkus quarkus_quickstarts scala system-test tomcat tomee wildfly wycheproof netty spring"
@@ -175,6 +177,9 @@ parseCommandLineArgs() {
 				docker_image_source_job_name=${dir_array[0]}
 				build_number=${dir_array[1]};;
 
+			"--base_docker_registry_required" )
+				base_docker_registry_required="$1"; shift;;
+
 			"--criu_default_image_job_name" )
 				criu_default_image_job_name="$1"; shift;;
 
@@ -266,6 +271,19 @@ parseCommandLineArgs "$@"
 # DOCKER_HOST=$(docker-ip $test-test)
 
 if [ $command_type == "build" ]; then
+	# Temporarily ubi image with criu is only available internally
+	if [[ $base_docker_registry_required != "false" ]]; then
+		echo "Private Docker Registry login starts to obtain base docker image:"
+		echo $DOCKER_REGISTRY_CREDENTIALS_PSW | $container_login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
+		if [[ "${docker_os}" == *"ubi"* ]]; then
+			# Temporarily only ubi images require specified base image, need to change to a parameter if other tests require this value later
+			echo "base_docker_registry_dir is 'ubi8-with-criu/${platform}-ubi8-criu'"
+			base_docker_registry_dir="ubi8-with-criu/${platform}-ubi8-criu"
+			echo "$container_pull $docker_registry_url/$base_docker_registry_dir:latest"
+			$container_pull $docker_registry_url/$base_docker_registry_dir:latest
+		fi
+		$container_logout $docker_registry_url
+	fi
 	echo "build_image.sh $test $version $impl $docker_os $package $build_type $platform $check_external_custom $imageArg"
 	source $(dirname "$0")/build_image.sh $test $version $impl $docker_os $package $build_type $platform $check_external_custom $imageArg
 fi
@@ -290,6 +308,17 @@ if [ $command_type == "run" ]; then
 			if [[ $docker_registry_url ]]; then
 				echo "Private Docker Registry login starts:"
 				echo $DOCKER_REGISTRY_CREDENTIALS_PSW | $container_login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin $docker_registry_url
+
+				# Temporarily AArch64 machines are missing micro-architecture labels				
+				if [[ -z "$node_label_micro_architecture"]]; then
+					aarch64_micro_label="hw.arch.aarch64"
+					if [[  "$node_labels" == *"$aarch64_micro_label"* ]]; then
+						node_label_micro_architecture="$aarch64_micro_label"
+					else
+						echo "Error: machine is missing micro-architecture label"
+						exit 1
+					fi
+				fi
 
 				restore_ready_checkpoint_image_folder="${docker_registry_url}/${docker_image_source_job_name}/${JDK_VERSION}-${JDK_IMPL}-${docker_os}-${platform}-${node_label_current_os}-${node_label_micro_architecture}"
 				tagged_restore_ready_checkpoint_image_num="${restore_ready_checkpoint_image_folder}:${build_number}"
