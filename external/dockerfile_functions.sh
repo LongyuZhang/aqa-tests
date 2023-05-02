@@ -80,6 +80,7 @@ print_image_args() {
     local vm=$4
     local package=$5
     local build=$6
+    local platform=$7
 
     image_name="eclipse-temurin"
     tag=""
@@ -94,8 +95,9 @@ print_image_args() {
             tag=open-${tag}
         else
             # os is ubi
-            image_name="registry.access.redhat.com/ubi8/ubi"
-            tag="8.6"
+            # temporarily all ubi based testing use hyc base image
+            image_name="sys-rt-docker-local.artifactory.swg-devops.com/ubi8-with-criu/${platform}-ubi8-criu"
+            tag="latest"
         fi
     fi
     image="${image_name}:${tag}"
@@ -581,7 +583,7 @@ generate_dockerfile() {
     echo -n "Writing ${file} ... "
     print_legal ${file};
     print_adopt_test ${file} ${test};
-    print_image_args ${file} ${os} ${version} ${vm} ${package} ${build};
+    print_image_args ${file} ${os} ${version} ${vm} ${package} ${build} ${platform};
     print_result_comment_arg ${file};
     print_test_tag_arg ${file} ${test} ${tag_version};
     print_${os}_pkg ${file} "${!packages}";

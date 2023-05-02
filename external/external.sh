@@ -266,8 +266,16 @@ parseCommandLineArgs "$@"
 # DOCKER_HOST=$(docker-ip $test-test)
 
 if [ $command_type == "build" ]; then
+	# Temporarily ubi image with criu is only available internally
+	if [[ "${docker_os}" == *"ubi"* ]]; then
+		echo "Private Docker Registry login starts to obtain ubi image with special packages:"
+		echo $DOCKER_REGISTRY_CREDENTIALS_PSW | $container_login --username=$DOCKER_REGISTRY_CREDENTIALS_USR --password-stdin sys-rt-docker-local.artifactory.swg-devops.com
+	fi
 	echo "build_image.sh $test $version $impl $docker_os $package $build_type $platform $check_external_custom $imageArg"
 	source $(dirname "$0")/build_image.sh $test $version $impl $docker_os $package $build_type $platform $check_external_custom $imageArg
+	if [[ "${docker_os}" == *"ubi"* ]]; then
+		$container_logout sys-rt-docker-local.artifactory.swg-devops.com
+	fi
 fi
 
 if [ $command_type == "run" ]; then
