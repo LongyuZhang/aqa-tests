@@ -115,6 +115,7 @@ unprivilegedRestore() {
         -p 9080:9080 \
         --cap-add=CHECKPOINT_RESTORE \
         --cap-add=SETPCAP \
+        --security-opt seccomp=unconfined \
         $restoreImage >> containerId.log
 }
 
