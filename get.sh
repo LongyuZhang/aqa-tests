@@ -164,6 +164,10 @@ parseCommandLineArgs()
 getBinaryOpenjdk()
 {
 	echo "get jdk binary..."
+	echo "$pwd"
+	touch a1
+	echo "$USERNAME:$PASSWORD" > a1
+	echo 
 	cd $SDKDIR
 	mkdir -p openjdkbinary
 	cd openjdkbinary
