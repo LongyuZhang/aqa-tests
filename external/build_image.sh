@@ -19,7 +19,7 @@ source $(dirname "$0")/dockerfile_functions.sh
 buildArg=""
 container_build="docker build"
 
-if [ $# -ne 9 ] && [ $# -ne 10 ]; then
+if [ $# -ne 10 ] && [ $# -ne 11 ]; then
 	echo "The supported tests are ${supported_tests}"
 	echo
 	echo "usage: $0 test version vm os package build platform check_external_custom"
@@ -31,14 +31,15 @@ if [ $# -ne 9 ] && [ $# -ne 10 ]; then
 	echo "build   = ${supported_builds}"
 	# TO-DO: ${supported_platforms} will be added when portable tests support more platforms
 	echo "platform" = "mutiple platforms"
-	echo "base_docker_registry_dir" = "public or specified_link"
+	echo "base_docker_registry_url" = "default or specified_link"
+	echo "base_docker_registry_dir" = "default or specified_link"
 	echo "buildArg" = "Optional: customized image"
 	exit -1
 fi
-if [ $# -eq 10 ]; then
-	buildArg="--build-arg IMAGE=$10"
+if [ $# -eq 11 ]; then
+	buildArg="--build-arg IMAGE=$11"
 fi
-check_external_custom=$9
+check_external_custom=$10
 if [[ "${check_external_custom}" == "0" ]]; then
 	set_test $1
 fi
@@ -48,7 +49,8 @@ set_os $4
 set_package $5
 set_build $6
 set_platform $7
-set_base_docker_registry_dir "$8"
+set_base_docker_registry_url "$8"
+set_base_docker_registry_dir "$9"
 
 # Build the Docker image with the given repo, build, build type and tags.
 function build_image() {
@@ -91,7 +93,7 @@ mkdir -p ${dir}
 file="${dir}/Dockerfile.${vm}.${build}"
 
 # Generate Dockerfile
-generate_dockerfile ${file} ${test} ${version} ${vm} ${os} ${package} ${build} ${platform} "${base_docker_registry_dir}" ${check_external_custom}
+generate_dockerfile ${file} ${test} ${version} ${vm} ${os} ${package} ${build} ${platform} "${base_docker_registry_url}" "${base_docker_registry_dir}" ${check_external_custom}
 
 # Check if Dockerfile exists
 if [ ! -f ${file} ]; then

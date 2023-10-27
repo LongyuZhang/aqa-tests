@@ -80,7 +80,8 @@ print_image_args() {
     local vm=$4
     local package=$5
     local build=$6
-    local base_docker_registry_dir="$7"
+    local base_docker_registry_url="$7"
+    local base_docker_registry_dir="$8"
 
     image_name="eclipse-temurin"
     tag=""
@@ -96,7 +97,7 @@ print_image_args() {
         else
             # os is ubi
             # temporarily all ubi based testing use internal base image
-            image_name="$DOCKER_REGISTRY_URL/$base_docker_registry_dir"
+            image_name="$base_docker_registry_url/$base_docker_registry_dir"
             tag="latest"
         fi
     fi
@@ -578,8 +579,9 @@ generate_dockerfile() {
     package=$6
     build=$7
     platform=$8
-    base_docker_registry_dir="$9"
-    check_external_custom_test=$10
+    base_docker_registry_url="$9"
+    base_docker_registry_dir="$10"
+    check_external_custom_test=$11
 
 
     if [[ "$check_external_custom_test" == "1" ]]; then
@@ -599,7 +601,7 @@ generate_dockerfile() {
     echo -n "Writing ${file} ... "
     print_legal ${file};
     print_adopt_test ${file} ${test};
-    print_image_args ${file} ${os} ${version} ${vm} ${package} ${build} "${base_docker_registry_dir}";
+    print_image_args ${file} ${os} ${version} ${vm} ${package} ${build} "${base_docker_registry_url}" "${base_docker_registry_dir}";
     print_result_comment_arg ${file};
     print_test_tag_arg ${file} ${test} ${tag_version};
     print_${os}_pkg ${file} "${!packages}";
