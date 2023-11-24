@@ -41,8 +41,8 @@ getSemeruDockerfile() {
         if [[ $jdkVersion ]]; then
             semeruDockerfile="Dockerfile.open.releases.full"
             if [[ $docker_os == "ubi" ]]; then
-                echo "curl -OLJSks https://raw.githubusercontent.com/ibmruntimes/semeru-containers/ibm/$jdkVersion/jdk/${docker_os}/${docker_os}${docker_os_version}/${semeruDockerfile}"
-                curl -OLJSks https://raw.githubusercontent.com/ibmruntimes/semeru-containers/ibm/$jdkVersion/jdk/${docker_os}/${docker_os}${docker_os_version}/${semeruDockerfile}
+                echo "curl -OLJSks https://raw.githubusercontent.com/longyuzhang/semeru-containers/tom1/$jdkVersion/jdk/${docker_os}/${docker_os}${docker_os_version}/${semeruDockerfile}"
+                curl -OLJSks https://raw.githubusercontent.com/longyuzhang/semeru-containers/tom1/$jdkVersion/jdk/${docker_os}/${docker_os}${docker_os_version}/${semeruDockerfile}
                 if [[ ${PLATFORM} == *"ppc"*  &&  $docker_os_version == "8" ]]; then
                     findCommandAndReplace 'FROM registry.access.redhat.com/ubi8/ubi:latest' 'FROM registry.access.redhat.com/ubi8/ubi:latest \n COPY ubi.repo /etc/yum.repos.d/ \n ' $semeruDockerfile ";"
                 fi
@@ -50,8 +50,8 @@ getSemeruDockerfile() {
                 findCommandAndReplace 'RUN --mount.*' 'ARG DOCKER_REGISTRY_CREDENTIALS_USR \n ARG DOCKER_REGISTRY_CREDENTIALS_PSW \n RUN set -eux; \\' $semeruDockerfile
                 findCommandAndReplace '\/opt\/java\/openjdk\/legal\/java.base\/LICENSE \/licenses;' "\/opt\/java\/openjdk\/legal\/java.base\/LICENSE \/licenses\/;" $semeruDockerfile
             else # docker_os is ubuntu
-                echo "curl -OLJSks https://raw.githubusercontent.com/ibmruntimes/semeru-containers/ibm/$jdkVersion/jdk/${docker_os}/${semeruDockerfile}"
-                curl -OLJSks https://raw.githubusercontent.com/ibmruntimes/semeru-containers/ibm/$jdkVersion/jdk/${docker_os}/${semeruDockerfile}
+                echo "curl -OLJSks https://raw.githubusercontent.com/longyuzhang/semeru-containers/tom1/$jdkVersion/jdk/${docker_os}/${semeruDockerfile}"
+                curl -OLJSks https://raw.githubusercontent.com/longyuzhang/semeru-containers/tom1/$jdkVersion/jdk/${docker_os}/${semeruDockerfile}
             fi
 
             findCommandAndReplace 'curl -LfsSo \/tmp\/openjdk.tar.gz ${BINARY_URL};' " " $semeruDockerfile
