@@ -466,11 +466,13 @@ print_test_files() {
     else
         echo -e "# This is the main script to run ${test} tests" \
                 "\nCOPY ${test}/test.sh /test.sh" \
+                "\nRUN chmod +x /test.sh" \
                 "\nCOPY test_base_functions.sh test_base_functions.sh\n" >> ${file}
     fi
     if [[ "${test}" == *"portable"* ]]; then
         echo -e "# This is the script used to restore portable test later." \
-            "\nCOPY ${test}/test_restore.sh /test_restore.sh" >> ${file}
+            "\nCOPY ${test}/test_restore.sh /test_restore.sh" \
+            "\nRUN chmod +x /test_restore.sh" >> ${file}
     fi
     if [[ ! -z ${localPropertyFile} ]]; then
         echo -e "# This local property file is needed to set up user preferred properties." \

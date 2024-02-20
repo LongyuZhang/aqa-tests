@@ -17,8 +17,7 @@
 	<test>
 		<testCaseName>criu-portable-checkpoint_test</testCaseName>
 		<command> $(TEST_ROOT)$(D)external$(D)external.sh --run --tag "${DOCKERIMAGE_TAG}" --dir criu-portable-checkpoint --testtarget _cmdLineTester_criu_keepCheckpoint --portable "true" --platform "${PLATFORM}" --node_name "${NODE_NAME}" --node_labels "${NODE_LABELS}" --docker_registry_required "true" --docker_registry_url $(DOCKER_REGISTRY_URL) --docker_registry_dir "$(DOCKER_REGISTRY_DIR)" --criu_default_image_job_name "$(CRIU_DEFAULT_IMAGE_JOB_NAME)" --reportdst $(REPORTDIR) --docker_args "$(EXTRA_DOCKER_ARGS) --tmpfs /run"; \
-		$(TEST_STATUS); \
-		$(TEST_ROOT)$(D)external$(D)external.sh --clean --tag "${DOCKERIMAGE_TAG}" --dir criu-portable-checkpoint --platform "${PLATFORM}" --node_labels "${NODE_LABELS}" --docker_registry_url $(DOCKER_REGISTRY_URL) --docker_registry_dir "$(DOCKER_REGISTRY_DIR)" --criu_default_image_job_name "$(CRIU_DEFAULT_IMAGE_JOB_NAME)"
+		$(TEST_STATUS)
 		</command>
 		<disables>
 			<disable>
