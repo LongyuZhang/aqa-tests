@@ -293,7 +293,12 @@ if [ $command_type == "prepare" ]; then
 		fi
 		if [[ ! -z $BASE_DOCKER_REGISTRY_CREDENTIAL_USR ]]; then
 			echo "Base Docker Registry login starts to obtain Base Docker Image:"
-			echo $BASE_DOCKER_REGISTRY_CREDENTIAL_PSW | $container_login --username=$BASE_DOCKER_REGISTRY_CREDENTIAL_USR --password-stdin $base_docker_registry_url
+			
+			echo "testtestest $BASE_DOCKER_REGISTRY_CREDENTIAL_USR   $base_docker_registry_url"
+
+
+
+			echo $BASE_DOCKER_REGISTRY_CREDENTIAL_PSW | $container_login --username="$BASE_DOCKER_REGISTRY_CREDENTIAL_USR" --password-stdin $base_docker_registry_url
 		else
 			echo "No credential available for container registry, will proceed without login..."
 		fi
