@@ -196,7 +196,7 @@ def setupParallelEnv() {
 				// check for each lib. If lib does not exist, donwload it.
 				// If lib exists, SHA will be checked. Re-download if SHA does not match.
 				timeout(time: 20, unit: 'MINUTES') {
-					def customUrl = "https://ci.adoptium.net/job/test.getDependency/lastSuccessfulBuild/artifact/"
+					def customUrl = "https://ci.adoptium.net/job/testtesttest.getDependency/lastSuccessfulBuild/artifact/"
 					if (PLATFORM.contains("windows")) {
 						env.LIB_DIR = env.LIB_DIR.replaceAll("\\\\", "/")
 					}
@@ -644,7 +644,7 @@ def buildTest() {
 			// check for each lib. If lib does not exist, donwload it.
 			// If lib exists, SHA will be checked. Re-download if SHA does not match.
 			timeout(time: 20, unit: 'MINUTES') {
-				def customUrl = "https://ci.adoptium.net/job/test.getDependency/lastSuccessfulBuild/artifact/"
+				def customUrl = "https://ci.adoptium.net/job/testtesttesttest.getDependency/lastSuccessfulBuild/artifact/"
 				if (PLATFORM.contains("windows")) {
 					env.LIB_DIR = env.LIB_DIR.replaceAll("\\\\", "/")
 				}
