@@ -629,7 +629,7 @@ getVendorTestMaterial() {
 
 		if [[ "$dir" =~ "jck" ]]; then
 			echo "BUILD_LIST is $BUILD_LIST"
-			if [[ "$BUILD_LIST" =~ "jck" || "$BUILD_LIST" =~ "all" ]]; then
+			if [[ "$BUILD_LIST" =~ "jck" || "$BUILD_LIST" =~ "external" ||"$BUILD_LIST" =~ "all" ]]; then
 				echo "Remove existing subdir. $repoURL will be used..."
 				rm -rf jck
 			else
@@ -637,6 +637,9 @@ getVendorTestMaterial() {
 				continue
 			fi
 		fi
+
+
+		echo "!TestTestTest pwd is $pwd"
 
 		echo "git clone ${branchOption} $repoURL $dest"
 		git clone -q --depth 1 $branchOption $repoURL $dest
