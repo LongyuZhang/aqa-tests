@@ -32,6 +32,12 @@ echo "JDK_VERSION has been unset, use auto-detect instead."
 export DYNAMIC_COMPILE=true
 export BUILD_LIST=functional
 
+
+# echo "testtest ADOPTOPENJDK_REPO value is $(ADOPTOPENJDK_REPO)"
+# echo "testtest env.ADOPTOPENJDK_REPO value is $(env.ADOPTOPENJDK_REPO)"
+# echo "testtest ADOPTOPENJDK_BRANCH value is $(ADOPTOPENJDK_BRANCH)"
+echo "testtest USE_TESTENV_PROPERTIES value is $USE_TESTENV_PROPERTIES"
+
 cd /aqa-tests
 ./get.sh
 cd /aqa-tests/TKG
