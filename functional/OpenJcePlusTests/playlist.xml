@@ -15,16 +15,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/resources/playlist.xsd">
 	<test>
 		<testCaseName>openJcePlusTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>only applicable for Semeru atm</comment>
-				<vendor>eclipse</vendor>
-			</disable>
-			<disable>
-				<comment>Only applicable on aix, pliunx, xlinux, wins64 and zlinux atm</comment>
-				<platform>^((?!(ppc64_aix|ppc64le_linux|x86-64_linux|x86-64_windows|s390x_linux)).)*$</platform>
-			</disable>
-		</disables>
 		<command>ant -f ${BUILD_ROOT}/functional/OpenJcePlusTests/test.xml -DTEST_JAVA=$(Q)$(JAVA_COMMAND)$(Q) launch_test; \
 	$(TEST_STATUS)</command>
 		<levels>
