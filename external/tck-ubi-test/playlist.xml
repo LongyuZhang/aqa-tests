@@ -35,4 +35,26 @@
 			<group>external</group>
 		</groups>
 	</test>
+	<test>
+		<testCaseName>tck-ubi-sanity-test</testCaseName>
+		<command> $(TEST_ROOT)$(D)external$(D)external.sh --run --tag "${DOCKERIMAGE_TAG}" --dir tck-ubi-test --testtarget "_sanity.jck" --reportdst $(REPORTDIR) --docker_args "$(EXTRA_DOCKER_ARGS) -v ${BUILD_ROOT}/external/tck-ubi-test/jck_root/JCK${JDK_VERSION}-unzipped:/opt/jck_root/unzipped -v $(TEST_ROOT):/opt/test_root"; \
+		$(TEST_STATUS); \
+		$(TEST_ROOT)$(D)external$(D)external.sh --clean --tag "${DOCKERIMAGE_TAG}" --dir tck-ubi-test
+		</command>
+		<disables>
+			<disable>
+				<comment>Only applicable on xlinux, plinux, alinux, and zlinux atm</comment>
+				<platform>^((?!(x86-64_linux|ppc64le_linux|aarch64_linux|s390x_linux)).)*$</platform>
+			</disable>
+		</disables>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+		<levels>
+			<level>special</level>
+		</levels>
+		<groups>
+			<group>external</group>
+		</groups>
+	</test>
 </playlist>
