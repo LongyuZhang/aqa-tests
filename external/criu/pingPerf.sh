@@ -201,7 +201,8 @@ checkLog() {
 
 clean() {
     echo "clean ..."
-    sudo podman stop --all
+    # sudo podman stop --all
+    sudo podman kill --signal KILL -a
     sudo podman container rm --all -f
 }
 
