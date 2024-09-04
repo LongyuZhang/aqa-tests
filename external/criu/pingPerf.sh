@@ -60,7 +60,10 @@ getSemeruDockerfile() {
 
             findCommandAndReplace 'mkdir -p \/opt\/java\/openjdk; \\' "mkdir -p \/opt\/java\/openjdk;" $semeruDockerfile
             findCommandAndReplace 'cd \/opt\/java\/openjdk; \\' "COPY NEWJDK\/ \/opt\/java\/openjdk" $semeruDockerfile
-            findCommandAndReplace 'tar -xf \/tmp\/openjdk.tar.gz --strip-components=1;' "RUN \/opt\/java\/openjdk\/bin\/java --version" $semeruDockerfile
+            
+            
+
+            findCommandAndReplace ',bootClassesOnly,nonFatal' "" $semeruDockerfile
 
             mkdir NEWJDK
             cp -r $testJDKPath/. NEWJDK/
@@ -110,6 +113,10 @@ prepare() {
             # replace OpenLiberty dockerfile base image
             findCommandAndReplace "FROM icr.io\/appcafe\/ibm-semeru-runtimes:open-21-jre-${docker_os}9-minimal" "FROM local-ibm-semeru-runtimes:latest" $libertyDockerfilePath '/'
             findCommandAndReplace "microdnf" "yum" $libertyDockerfilePath
+
+
+            findCommandAndReplace ",nonFatal" "" $libertyDockerfilePath
+
         else # docker_os is ubuntu
             libertyDockerfilePath="releases/latest/beta/Dockerfile.${docker_os}.openjdk${jdkVersion}"
             findCommandAndReplace "FROM ibm-semeru-runtimes:open-${jdkVersion}-jre-jammy" "FROM local-ibm-semeru-runtimes:latest" $libertyDockerfilePath '/'
