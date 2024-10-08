@@ -414,7 +414,7 @@ print_criu_install() {
                 "\n\t&& git clone https://github.com/ibmruntimes/criu.git \\" \
                 "\n\t&& cd criu \\" \
                 "\n\t&& git fetch origin \\" \
-                "\n\t&& git reset --hard origin/0.44.0-release \\" \
+                "\n\t&& git reset --hard origin/0.45.0-release \\" \
                 "\n\t&& make PREFIX=/usr CONFIG_AMDGPU=n install \\" \
                 "\n\t&& criu -V " \
                 "\n" >> ${file}
