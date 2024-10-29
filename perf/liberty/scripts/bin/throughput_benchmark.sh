@@ -1786,7 +1786,7 @@ echoAndRunCmd "cd -"
 
 
 # Run the Garbage Collection and Memory Visualization (GCMV) tool.
-# should really be run on a seperate machine so perf machine can run other jobs
+# should really be run on a separate machine so perf machine can run other jobs
 if [[ "$GCMV_ENABLED" = "true" ]]; then
   runGCMVTool
 else
