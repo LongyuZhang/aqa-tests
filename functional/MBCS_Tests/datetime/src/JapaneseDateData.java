@@ -72,7 +72,7 @@ public class JapaneseDateData{
         invalidList.add(new PairOfDate(JapaneseEra.MEIJI, 45,
                                     7, 30, 1912, true));
         // Only meiji 6 and later are supported.
-        // Because, before meiji 5, Gregorio calender is not used.
+        // Because, before meiji 5, Gregorio calendar is not used.
         invalidList.add(new PairOfDate(JapaneseEra.MEIJI, 5,
                                     12, 31, 1872, true));
         invalidList.add(new PairOfDate(JapaneseEra.MEIJI, 1,
