@@ -1658,6 +1658,35 @@
 		</features>
 	</test>
 	<test>
+		<testCaseName>jdk_restricted_security_j9</testCaseName>
+		<disable>
+			<comment>Only applicable on aix, pliunx, xlinux, wins64 and zlinux atm</comment>
+			<platform>^((?!(ppc64_aix|ppc64le_linux|x86-64_linux|x86-64_windows|s390x_linux)).)*$</platform>
+		</disable>
+		<command>$(JAVA_COMMAND) -Xmx512m -jar $(Q)$(TEST_RESROOT)$(D)jtreg$(D)lib$(D)jtreg.jar$(Q) \
+	$(JTREG_BASIC_OPTIONS) $(JDK_NATIVE_OPTIONS) -vmoptions:$(Q)-Xmx512m $(JVM_OPTIONS) $(VMOPTION_HEADLESS)$(Q) \
+	$(TIMEOUT_HANDLER) \
+	-w $(Q)$(REPORTDIR)$(D)work$(Q) \
+	-r $(Q)$(REPORTDIR)$(D)report$(Q) \
+	-jdk:$(Q)$(TEST_JDK_HOME)$(Q) \
+	$(Q)$(OPENJDK_DIR)$(D)closed$(D)test$(D)jdk$(D)openj9$(D)internal$(D)security$(Q); \
+	$(TEST_STATUS)</command>
+		<features>
+			<feature>FIPS140_3_OpenJCEPlusFIPS:required</feature>
+			<feature>FIPS140_3_OpenJCEPlusFIPS.FIPS140-3:required</feature>
+		</features>
+		<levels>
+			<level>special</level>
+		</levels>
+		<groups>
+			<group>openjdk</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>jdk_rmi</testCaseName>
 		<variations>
 			<variation>Mode150</variation>
