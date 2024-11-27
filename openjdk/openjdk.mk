@@ -113,11 +113,16 @@ JTREG_BASIC_OPTIONS += $(JTREG_IGNORE_OPTION)
 ifeq ($(ARCH), riscv64)
 	JTREG_TIMEOUT_OPTION = -timeoutFactor:16
 else
+# aarch64 linux requires extra time, set timeoutFactor to 12
+ifneq ($(filter linux_aarch64, $(SPEC)),)
+	JTREG_TIMEOUT_OPTION =  -timeoutFactor:12
+else
 # Multiple by 8 the timeout numbers, except on zOS use 2
 ifneq ($(OS),OS/390)
 	JTREG_TIMEOUT_OPTION =  -timeoutFactor:8
 else
 	JTREG_TIMEOUT_OPTION =  -timeoutFactor:2
+endif
 endif
 endif
 JTREG_BASIC_OPTIONS += $(JTREG_TIMEOUT_OPTION)
