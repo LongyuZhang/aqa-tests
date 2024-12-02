@@ -30,7 +30,7 @@ export BUILD_LIST=functional
 echo "USE_TESTENV_PROPERTIES is $USE_TESTENV_PROPERTIES"
 
 cd /aqa-tests
-./get.sh
+./get.sh --openj9_repo https://github.com/LongyuZhang/openj9.git --openj9_branch criuDebug1
 cd /aqa-tests/TKG
 
 set -e
