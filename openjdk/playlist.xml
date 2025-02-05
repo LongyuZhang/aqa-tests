@@ -101,16 +101,6 @@
 	</test>
 	<test>
 		<testCaseName>hotspot_custom</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/adoptium/aqa-tests/issues/5357</comment>
-				<impl>openj9</impl>
-			</disable>
-			<disable>
-				<comment>https://github.com/adoptium/aqa-tests/issues/5357</comment>
-				<impl>ibm</impl>
-			</disable>
-		</disables>
 		<variations>
 			<variation>Mode150</variation>
 			<variation>Mode650</variation>
