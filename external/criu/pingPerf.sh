@@ -43,7 +43,7 @@ getSemeruDockerfile() {
                 jdkVersionDir=21
             fi
             semeruDockerfile="Dockerfile.open.releases.full"
-            semeruDockerfileUrlBase="https://raw.githubusercontent.com/ibmruntimes/semeru-containers/ibm/$jdkVersionDir/jdk/${docker_os}"
+            semeruDockerfileUrlBase="https://raw.githubusercontent.com/LongyuZhang/semeru-containers/refs/heads/criuu1/$jdkVersionDir/jdk/${docker_os}"
             if [[ $docker_os == "ubi" ]]; then
                 echo "curl -OLJSks ${semeruDockerfileUrlBase}/${docker_os}${docker_os_version}/${semeruDockerfile}"
                 curl -OLJSks ${semeruDockerfileUrlBase}/${docker_os}${docker_os_version}/${semeruDockerfile}
