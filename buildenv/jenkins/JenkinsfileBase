@@ -1664,12 +1664,26 @@ def getGitRepoBranch(ownerBranch, defaultOwnerBranch, repo) {
 
 def forceCleanWS() {
 	try {
+		def workdir = "${env.WORKSPACE}"
+		if (PLATFORM.contains("windows")) {
+			workdir = env.WORKSPACE.replaceAll("\\\\", "/")
+		}
+		echo "1st force clean ${env.WORKSPACE}/aqa-tests/TKG"
+		sh "rm -rf ${env.WORKSPACE}/aqa-tests/TKG"
+		
+		dir (env.WORKSPACE) {
+			echo "Force clean at $pwd"
+			sh "rm -rf aqa-tests/TKG"
+		}
 		cleanWs disableDeferredWipeout: true, deleteDirs: true
 	} catch (Exception e) {
 		echo 'Exception: ' + e.toString()
 		//cleanWs has issue to delete workspace that contains non-ASCII filename in TKG output https://issues.jenkins.io/browse/JENKINS-33478
 		//cannot delete workspace directly. Otherwise, Jenkins job will abort due to missing workspace
-		sh "rm -rf ${env.WORKSPACE}/aqa-tests/TKG"
+		dir (env.WORKSPACE) {
+			echo "Force clean at $pwd"
+			sh "rm -rf aqa-tests/TKG"
+		}
 		// call cleanWs() again
 		cleanWs disableDeferredWipeout: true, deleteDirs: true
 	}
