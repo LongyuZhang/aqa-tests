@@ -470,6 +470,11 @@ def runTest() {
     try {
         def retry_count = 0
         def sleep_time = 180
+        def workdir = "${env.WORKSPACE}"
+        if (PLATFORM.contains("windows")) {
+            workdir = env.WORKSPACE.replaceAll("\\\\", "/")
+        }
+        jenkinsfile = load "$workdir/aqa-tests/buildenv/jenkins/JenkinsfileBase"
 
         if (params.PLATFORM.contains('zos')) {
             /* Ensure correct CC env */
@@ -491,7 +496,7 @@ def runTest() {
                 }
                 retry_count++
                 timeout(time: 1, unit: 'HOURS') {
-                    forceCleanWS()
+                    jenkinsfile.forceCleanWS()
                 }
                 sh "git clone -b ${SCM_GIT_BRANCH} ${SCM_GIT_REPO_VAL} aqa-tests"
             }
@@ -507,7 +512,7 @@ def runTest() {
                 }
                 retry_count++
                 timeout(time: 1, unit: 'HOURS') {
-                    forceCleanWS()
+                    jenkinsfile.forceCleanWS()
                 }
                 checkout scm: [$class: 'GitSCM',
                     branches: [[name: "${scm.branches[0].name}"]],
@@ -520,10 +525,6 @@ def runTest() {
             }
         }
         if (params.TEST_FLAG == "OpenJCEPlus") {
-            def workdir = "${env.WORKSPACE}"
-            if (PLATFORM.contains("windows")) {
-                workdir = env.WORKSPACE.replaceAll("\\\\", "/")
-            }
             def javaSecurityFile = "${workdir}/aqa-tests/config/openjceplus/jdk${params.JDK_VERSION}/${params.PLATFORM}/java.security"
             if (!fileExists(javaSecurityFile)) {
                 javaSecurityFile = "${workdir}/aqa-tests/config/openjceplus/jdk/${params.PLATFORM}/java.security"
@@ -535,7 +536,6 @@ def runTest() {
             env.EXTRA_OPTIONS += " -Djava.security.properties=${javaSecurityFile}"
             sh "cat ${javaSecurityFile}"
         }
-        jenkinsfile = load "${WORKSPACE}/aqa-tests/buildenv/jenkins/JenkinsfileBase"
         if (LABEL.contains('ci.agent.dynamic') && CLOUD_PROVIDER.equals('azure')) {
             //Set dockerimage for azure agent. Fyre has stencil to setup the right environment
             docker.image('adoptopenjdk/centos7_build_image').pull()
@@ -660,19 +660,6 @@ def checkErrors(errorList) {
     }
 }
 
-
-def forceCleanWS() {
-    try {
-        cleanWs disableDeferredWipeout: true, deleteDirs: true
-    } catch (Exception e) {
-        echo 'Exception: ' + e.toString()
-        //cleanWs has issue to delete workspace that contains non-ASCII filename in TKG output https://issues.jenkins.io/browse/JENKINS-33478
-        //cannot delete workspace directly. Otherwise, Jenkins job will abort due to missing workspace
-        sh "rm -rf ${env.WORKSPACE}/aqa-tests/TKG"
-        // call cleanWs() again
-        cleanWs disableDeferredWipeout: true, deleteDirs: true
-    }
-}
 
 def changeParam(paramsList, newParams) {
     def childParams = []
